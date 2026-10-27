@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExamController;
+use App\Http\Controllers\MateriController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -38,9 +40,29 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::delete('/profile/avatar', [ProfileController::class, 'removeAvatar'])->name('profile.avatar.destroy');
 
+    // LMS: Materi (blog) & Tugas/Ujian — viewing for all, management for guru & superadmin
+    Route::get('/materis', [MateriController::class, 'index'])->name('materis.index');
+    Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
+
+    Route::middleware('teacher')->group(function () {
+        Route::get('/materis/create', [MateriController::class, 'create'])->name('materis.create');
+        Route::post('/materis', [MateriController::class, 'store'])->name('materis.store');
+        Route::get('/materis/{materi}/edit', [MateriController::class, 'edit'])->name('materis.edit');
+        Route::put('/materis/{materi}', [MateriController::class, 'update'])->name('materis.update');
+        Route::delete('/materis/{materi}', [MateriController::class, 'destroy'])->name('materis.destroy');
+
+        Route::get('/exams/create', [ExamController::class, 'create'])->name('exams.create');
+        Route::post('/exams', [ExamController::class, 'store'])->name('exams.store');
+        Route::get('/exams/{exam}/edit', [ExamController::class, 'edit'])->name('exams.edit');
+        Route::put('/exams/{exam}', [ExamController::class, 'update'])->name('exams.update');
+        Route::delete('/exams/{exam}', [ExamController::class, 'destroy'])->name('exams.destroy');
+    });
+
+    Route::get('/materis/{materi}', [MateriController::class, 'show'])->name('materis.show');
+    Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
+
     // Super Admin Only: User Management & Registration of Accounts
     Route::middleware('superadmin')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
     });
 });
-

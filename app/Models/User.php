@@ -39,6 +39,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user can manage LMS content (Super Admin or Guru).
+     */
+    public function isTeacher(): bool
+    {
+        return in_array($this->role, ['superadmin', 'guru'], true);
+    }
+
+    /**
+     * Check if user is a student (Murid).
+     */
+    public function isStudent(): bool
+    {
+        return $this->role === 'murid';
+    }
+
+    /**
      * Get URL for user avatar or default illustration.
      */
     public function getAvatarUrlAttribute(): string
@@ -57,8 +73,8 @@ class User extends Authenticatable
     {
         return match ($this->role) {
             'superadmin' => 'Super Admin',
-            'admin' => 'Admin',
-            'staff' => 'Staff',
+            'guru' => 'Guru',
+            'murid' => 'Murid',
             default => ucfirst((string) $this->role),
         };
     }
@@ -70,8 +86,8 @@ class User extends Authenticatable
     {
         return match ($this->role) {
             'superadmin' => 'badge-danger',
-            'admin' => 'badge-warning',
-            'staff' => 'badge-info',
+            'guru' => 'badge-primary',
+            'murid' => 'badge-success',
             default => 'badge-secondary',
         };
     }

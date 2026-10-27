@@ -25,19 +25,6 @@
             background-repeat: no-repeat;
             background-size: 70%;
         }
-        .captcha-container .captcha-img {
-            cursor: pointer;
-            background-color: #fff;
-            min-height: 48px;
-            display: inline-flex;
-            align-items: center;
-        }
-        .captcha-container .captcha-img img {
-            border-radius: 4px;
-            max-height: 48px;
-            width: auto;
-            vertical-align: middle;
-        }
     </style>
 </head>
 
@@ -86,10 +73,10 @@
                                     @if ($errors->any())
                                         <div class="alert alert-danger alert-dismissible fade show small" role="alert">
                                             <i class="fas fa-exclamation-triangle mr-1"></i>
-                                            @if ($errors->has('captcha'))
-                                                {{ $errors->first('captcha') }}
-                                            @elseif ($errors->has('email'))
+                                            @if ($errors->has('email'))
                                                 {{ $errors->first('email') }}
+                                            @elseif ($errors->has('password'))
+                                                {{ $errors->first('password') }}
                                             @else
                                                 Harap periksa kembali form login Anda.
                                             @endif
@@ -119,28 +106,6 @@
                                                 id="exampleInputPassword"
                                                 placeholder="Kata Sandi..."
                                                 required>
-                                        </div>
-
-                                        <!-- Captcha -->
-                                        <div class="form-group">
-                                            <div class="d-flex align-items-center mb-2 captcha-container">
-                                                <span class="captcha-img mr-2 rounded border overflow-hidden d-inline-block" title="Klik untuk memuat ulang captcha">
-                                                    {!! captcha_img('flat') !!}
-                                                </span>
-                                                <button type="button" class="btn btn-outline-secondary btn-sm reload-captcha" title="Muat ulang kode captcha">
-                                                    <i class="fas fa-sync-alt mr-1"></i> Refresh
-                                                </button>
-                                            </div>
-                                            <input type="text"
-                                                name="captcha"
-                                                class="form-control form-control-user @error('captcha') is-invalid @enderror"
-                                                id="exampleCaptcha"
-                                                placeholder="Masukkan Kode Captcha di atas..."
-                                                autocomplete="off"
-                                                required>
-                                            @error('captcha')
-                                                <div class="invalid-feedback ml-2">{{ $message }}</div>
-                                            @enderror
                                         </div>
 
                                         <div class="form-group">
@@ -181,47 +146,6 @@
 
     <!-- Custom scripts for all pages-->
     <script src="{{ asset('template/js/sb-admin-2.min.js') }}"></script>
-
-    <script>
-        $(document).ready(function() {
-            function reloadCaptcha($container, $btn) {
-                if ($btn) {
-                    $btn.find('i').addClass('fa-spin');
-                }
-                $.ajax({
-                    type: 'GET',
-                    url: "{{ route('captcha.reload') }}",
-                    success: function (data) {
-                        $container.find('.captcha-img').html(data.captcha);
-                    },
-                    error: function () {
-                        var $img = $container.find('.captcha-img img');
-                        if ($img.length) {
-                            var src = $img.attr('src').split('?')[0];
-                            $img.attr('src', src + '?' + Math.random());
-                        }
-                    },
-                    complete: function() {
-                        if ($btn) {
-                            $btn.find('i').removeClass('fa-spin');
-                        }
-                    }
-                });
-            }
-
-            $('.reload-captcha').click(function () {
-                var $btn = $(this);
-                var $container = $btn.closest('.captcha-container');
-                reloadCaptcha($container, $btn);
-            });
-
-            $(document).on('click', '.captcha-img img', function() {
-                var $container = $(this).closest('.captcha-container');
-                var $btn = $container.find('.reload-captcha');
-                reloadCaptcha($container, $btn);
-            });
-        });
-    </script>
 
 </body>
 

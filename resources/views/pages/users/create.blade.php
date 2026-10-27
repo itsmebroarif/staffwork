@@ -62,11 +62,11 @@
                                 <option value="superadmin" {{ old('role') === 'superadmin' ? 'selected' : '' }}>
                                     Super Admin (Akses Penuh Seluruh Sistem & Akun)
                                 </option>
-                                <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>
-                                    Admin (Akses Manajemen Data)
+                                <option value="guru" {{ old('role') === 'guru' ? 'selected' : '' }}>
+                                    Guru (Dapat Upload Materi, Tugas & Ujian)
                                 </option>
-                                <option value="staff" {{ old('role', 'staff') === 'staff' ? 'selected' : '' }}>
-                                    Staff (Anggota Karyawan Reguler)
+                                <option value="murid" {{ old('role', 'murid') === 'murid' ? 'selected' : '' }}>
+                                    Murid (Akses Belajar & Mengerjakan Tugas)
                                 </option>
                             </select>
                             <small class="form-text text-muted">Sesuaikan hak akses sesuai peran dan tanggung jawab pengguna.</small>
