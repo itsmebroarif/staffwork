@@ -28,7 +28,7 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'role' => 'staff',
+            'role' => 'murid',
             'avatar' => null,
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -46,12 +46,22 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the user is an admin.
+     * Indicate that the user is a guru.
      */
-    public function admin(): static
+    public function guru(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => 'admin',
+            'role' => 'guru',
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a murid.
+     */
+    public function murid(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'murid',
         ]);
     }
 

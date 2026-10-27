@@ -41,7 +41,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'string', 'in:superadmin,admin,staff'],
+            'role' => ['required', 'string', 'in:superadmin,guru,murid'],
             'password' => ['required', 'string', Password::min(6), 'confirmed'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:2048'],
         ], [
@@ -84,7 +84,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'role' => ['required', 'string', 'in:superadmin,admin,staff'],
+            'role' => ['required', 'string', 'in:superadmin,guru,murid'],
             'password' => ['nullable', 'string', Password::min(6), 'confirmed'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:2048'],
         ], [

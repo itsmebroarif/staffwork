@@ -19,10 +19,10 @@ test('super admin can view user management list', function () {
     $response->assertSee('Registrasi Akun Baru');
 });
 
-test('regular staff cannot access user management', function () {
-    $staff = User::factory()->create(['role' => 'staff']);
+test('guru cannot access user management', function () {
+    $guru = User::factory()->guru()->create();
 
-    $response = $this->actingAs($staff)->get(route('users.index'));
+    $response = $this->actingAs($guru)->get(route('users.index'));
 
     $response->assertStatus(403);
 });
@@ -34,9 +34,9 @@ test('super admin can register multiple accounts with custom roles', function ()
     $file = UploadedFile::fake()->image('staff-photo.jpg');
 
     $response = $this->actingAs($superadmin)->post(route('users.store'), [
-        'name' => 'Staff Andika',
+        'name' => 'Guru Andika',
         'email' => 'andika@example.com',
-        'role' => 'staff',
+        'role' => 'guru',
         'password' => 'secret123',
         'password_confirmation' => 'secret123',
         'avatar' => $file,
@@ -44,9 +44,9 @@ test('super admin can register multiple accounts with custom roles', function ()
 
     $response->assertRedirect(route('users.index'));
     $this->assertDatabaseHas('users', [
-        'name' => 'Staff Andika',
+        'name' => 'Guru Andika',
         'email' => 'andika@example.com',
-        'role' => 'staff',
+        'role' => 'guru',
     ]);
 
     $createdUser = User::where('email', 'andika@example.com')->first();
@@ -56,19 +56,19 @@ test('super admin can register multiple accounts with custom roles', function ()
 
 test('super admin can edit user details and role', function () {
     $superadmin = User::factory()->superadmin()->create();
-    $user = User::factory()->create(['name' => 'Old Name', 'role' => 'staff']);
+    $user = User::factory()->create(['name' => 'Old Name', 'role' => 'murid']);
 
     $response = $this->actingAs($superadmin)->put(route('users.update', $user), [
         'name' => 'New Name',
         'email' => $user->email,
-        'role' => 'admin',
+        'role' => 'guru',
     ]);
 
     $response->assertRedirect(route('users.index'));
     $this->assertDatabaseHas('users', [
         'id' => $user->id,
         'name' => 'New Name',
-        'role' => 'admin',
+        'role' => 'guru',
     ]);
 });
 

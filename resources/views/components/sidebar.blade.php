@@ -3,7 +3,7 @@
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('dashboard') }}">
         <div class="sidebar-brand-icon rotate-n-15">
-            <i class="fas fa-briefcase"></i>
+            <i class="fas fa-graduation-cap"></i>
         </div>
         <div class="sidebar-brand-text mx-3">StaffWork</div>
     </a>
@@ -16,6 +16,30 @@
         <a class="nav-link" href="{{ route('dashboard') }}">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Dashboard</span>
+        </a>
+    </li>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider">
+
+    <!-- Heading -->
+    <div class="sidebar-heading">
+        LMS
+    </div>
+
+    <!-- Nav Item - Materi -->
+    <li class="nav-item {{ request()->routeIs('materis.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('materis.index') }}">
+            <i class="fas fa-fw fa-book-open"></i>
+            <span>Materi</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Tugas & Ujian -->
+    <li class="nav-item {{ request()->routeIs('exams.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('exams.index') }}">
+            <i class="fas fa-fw fa-clipboard-list"></i>
+            <span>Tugas & Ujian</span>
         </a>
     </li>
 

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard - StaffWork')
+@section('title', 'Dashboard - StaffWork LMS')
 
 @section('content')
     <!-- Page Heading -->
@@ -13,13 +13,21 @@
             </p>
         </div>
         <div class="mt-2 mt-sm-0">
+            @if ($user->isTeacher())
+                <a href="{{ route('materis.create') }}" class="btn btn-sm btn-primary shadow-sm mr-1 font-weight-bold">
+                    <i class="fas fa-plus fa-sm text-white-50 mr-1"></i> Upload Materi
+                </a>
+                <a href="{{ route('exams.create') }}" class="btn btn-sm btn-primary shadow-sm mr-1 font-weight-bold">
+                    <i class="fas fa-clipboard-list fa-sm text-white-50 mr-1"></i> Buat Tugas/Ujian
+                </a>
+            @endif
             @if ($user->isSuperAdmin())
-                <a href="{{ route('users.create') }}" class="btn btn-sm btn-primary shadow-sm mr-1 font-weight-bold">
-                    <i class="fas fa-user-plus fa-sm text-white-50 mr-1"></i> Registrasi Akun Baru
+                <a href="{{ route('users.create') }}" class="btn btn-sm btn-outline-primary shadow-sm mr-1">
+                    <i class="fas fa-user-plus fa-sm mr-1"></i> Registrasi Akun
                 </a>
             @endif
             <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-primary shadow-sm">
-                <i class="fas fa-user-edit fa-sm mr-1"></i> Edit Profil & Foto
+                <i class="fas fa-user-edit fa-sm mr-1"></i> Edit Profil
             </a>
         </div>
     </div>
@@ -45,6 +53,42 @@
             </div>
         </div>
 
+        <!-- Guru Count Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Guru</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalGuru }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chalkboard-teacher fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Murid Count Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Murid</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalMurid }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-graduate fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Super Admin Count Card -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-danger shadow h-100 py-2">
@@ -52,7 +96,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Akun Super Admin</div>
+                                Super Admin</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalSuperAdmins }}</div>
                         </div>
                         <div class="col-auto">
@@ -63,44 +107,49 @@
             </div>
         </div>
 
-        <!-- Role / Hak Akses Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Role Akses Anda</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                <span class="badge {{ $user->role_badge_class }}">{{ $user->role_name }}</span>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-id-badge fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    </div>
 
-        <!-- Staff Count Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
+    <!-- LMS Summary Row -->
+    <div class="row">
+        <div class="col-xl-6 col-md-6 mb-4">
             <div class="card border-left-warning shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Staff Reguler</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalStaff }}</div>
+                                Materi Dipublikasikan</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalMaterials }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-user-friends fa-2x text-gray-300"></i>
+                            <i class="fas fa-book-open fa-2x text-gray-300"></i>
                         </div>
                     </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ route('materis.index') }}" class="small font-weight-bold">Lihat Materi &rarr;</a>
                 </div>
             </div>
         </div>
 
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-left-secondary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                                Tugas & Ujian</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalExams }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ route('exams.index') }}" class="small font-weight-bold">Lihat Tugas/Ujian &rarr;</a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Content Row -->
@@ -218,7 +267,7 @@
                 </div>
                 @if ($user->isSuperAdmin())
                     <div class="card-footer bg-light d-flex justify-content-between align-items-center">
-                        <span class="small text-muted">Super Admin dapat mendaftarkan banyak akun dengan role berbeda.</span>
+                        <span class="small text-muted">Super Admin dapat mendaftarkan akun Guru & Murid.</span>
                         <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm font-weight-bold">
                             <i class="fas fa-user-plus mr-1"></i> Tambah Akun Baru
                         </a>

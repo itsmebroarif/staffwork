@@ -6,13 +6,13 @@ use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
 
-test('login screen can be rendered with captcha', function () {
+test('login screen can be rendered without captcha', function () {
     $response = $this->get(route('login'));
 
     $response->assertStatus(200);
     $response->assertSee('StaffWork');
     $response->assertSee('Masuk (Login)');
-    $response->assertSee('captcha');
+    $response->assertDontSee('exampleCaptcha');
 });
 
 test('register screen can be rendered with proper fields', function () {
@@ -67,7 +67,6 @@ test('users can authenticate using login screen', function () {
     $response = $this->post(url('/auth/login'), [
         'email' => 'jane@example.com',
         'password' => 'password123',
-        'captcha' => 'test12',
     ]);
 
     $response->assertRedirect(route('dashboard'));
@@ -83,7 +82,6 @@ test('users can not authenticate with invalid password', function () {
     $response = $this->from(route('login'))->post(url('/auth/login'), [
         'email' => 'jane@example.com',
         'password' => 'wrong-password',
-        'captcha' => 'test12',
     ]);
 
     $this->assertGuest();

@@ -29,10 +29,6 @@ class AuthController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'captcha' => ['required', 'captcha'],
-        ], [
-            'captcha.captcha' => 'Kode captcha tidak valid, silakan coba kembali.',
-            'captcha.required' => 'Kode captcha wajib diisi.',
         ]);
 
         $credentials = [
