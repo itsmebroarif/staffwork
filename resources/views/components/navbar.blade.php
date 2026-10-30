@@ -21,30 +21,48 @@
     <!-- Topbar Navbar -->
     <ul class="navbar-nav ml-auto">
 
-        <!-- Nav Item - Alerts -->
+        @php
+            $unreadCount = Auth::user()->unreadNotifications()->count();
+            $latestNotifications = Auth::user()->notifications()->latest('created_at')->take(5)->get();
+        @endphp
+
+        <!-- Nav Item - Notifications -->
         <li class="nav-item dropdown no-arrow mx-1">
             <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="fas fa-bell fa-fw"></i>
-                <!-- Counter - Alerts -->
-                <span class="badge badge-danger badge-counter">1</span>
+                @if ($unreadCount > 0)
+                    <span class="badge badge-danger badge-counter">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
+                @endif
             </a>
-            <!-- Dropdown - Alerts -->
+            <!-- Dropdown - Notifications -->
             <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
                 aria-labelledby="alertsDropdown">
                 <h6 class="dropdown-header">
-                    Pemberitahuan
+                    Notifikasi
                 </h6>
-                <a class="dropdown-item d-flex align-items-center" href="#">
-                    <div class="mr-3">
-                        <div class="icon-circle bg-primary">
-                            <i class="fas fa-user-check text-white"></i>
+                @forelse ($latestNotifications as $notification)
+                    @php $data = $notification->data; @endphp
+                    <a class="dropdown-item d-flex align-items-center {{ $notification->read_at ? '' : 'bg-light' }}"
+                        href="{{ route('notifications.index') }}">
+                        <div class="mr-3">
+                            <div class="icon-circle {{ ($data['room'] ?? '') === 'bk' ? 'bg-danger' : ((($data['room'] ?? '') === 'guru') ? 'bg-warning' : 'bg-primary') }}">
+                                <i class="fas {{ ($data['room'] ?? '') !== '' ? 'fa-bell text-white' : 'fa-info text-white' }}"></i>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <div class="small text-gray-500">{{ date('d M Y') }}</div>
-                        <span class="font-weight-bold">Selamat datang di sistem manajemen StaffWork!</span>
-                    </div>
+                        <div>
+                            <div class="small text-gray-500">{{ $notification->created_at?->format('d M Y, H:i') }}</div>
+                            <span class="{{ $notification->read_at ? 'text-gray-800' : 'font-weight-bold' }}">
+                                {{ $data['title'] ?? 'Notifikasi' }}
+                            </span>
+                            <div class="small text-gray-600">{{ \Illuminate\Support\Str::limit($data['message'] ?? '', 50) }}</div>
+                        </div>
+                    </a>
+                @empty
+                    <span class="dropdown-item-text text-muted small">Belum ada notifikasi.</span>
+                @endforelse
+                <a class="dropdown-item text-center small font-weight-bold text-primary" href="{{ route('notifications.index') }}">
+                    Lihat Semua Notifikasi <i class="fas fa-arrow-right fa-sm ml-1"></i>
                 </a>
             </div>
         </li>

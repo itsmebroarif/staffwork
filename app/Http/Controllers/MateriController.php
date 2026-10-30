@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kelas;
 use App\Models\Material;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -16,7 +17,19 @@ class MateriController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Material::with('author')->latest();
+        $query = Material::with(['author', 'kelas'])->latest();
+
+        $user = $request->user();
+        if ($user->isStudent()) {
+            $query->where('is_published', true)
+                ->where(function ($q) use ($user) {
+                    $q->whereNull('kelas_id');
+
+                    if ($user->kelas_id !== null && $user->kelas !== null) {
+                        $q->orWhereHas('kelas', fn ($k) => $k->where('tingkat', $user->kelas->tingkat));
+                    }
+                });
+        }
 
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
@@ -37,7 +50,9 @@ class MateriController extends Controller
      */
     public function create(): View
     {
-        return view('pages.materis.create');
+        return view('pages.materis.create', [
+            'kelasList' => Kelas::orderBy('tingkat')->orderBy('name')->get(),
+        ]);
     }
 
     /**
@@ -45,15 +60,7 @@ class MateriController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string'],
-            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt', 'max:10240'],
-            'is_published' => ['nullable', 'boolean'],
-        ], [
-            'file.mimes' => 'Format file tidak didukung.',
-            'file.max' => 'Ukuran file maksimal 10MB.',
-        ]);
+        $validated = $this->validated($request);
 
         $filePath = null;
         $fileName = null;
@@ -62,16 +69,13 @@ class MateriController extends Controller
             $fileName = $request->file('file')->getClientOriginalName();
         }
 
-        $slug = Str::slug($validated['title']);
-        if (Material::where('slug', $slug)->exists()) {
-            $slug .= '-'.Str::random(5);
-        }
-
         Material::create([
             'user_id' => $request->user()->id,
             'title' => $validated['title'],
-            'slug' => $slug,
-            'body' => $validated['body'],
+            'slug' => $this->uniqueSlug($validated['title']),
+            'type' => $validated['type'],
+            'kelas_id' => $validated['kelas_id'] ?? null,
+            'body' => $validated['body'] ?? null,
             'file_path' => $filePath,
             'file_name' => $fileName,
             'is_published' => $request->boolean('is_published', true),
@@ -83,9 +87,13 @@ class MateriController extends Controller
     /**
      * Display the specified material.
      */
-    public function show(Material $materi): View
+    public function show(Request $request, Material $materi): View
     {
-        $materi->load('author');
+        if ($request->user()->isStudent() && ! $materi->isAccessibleBy($request->user())) {
+            abort(403, 'Anda tidak memiliki akses ke materi ini.');
+        }
+
+        $materi->load(['author', 'kelas']);
 
         return view('pages.materis.show', [
             'material' => $materi,
@@ -99,6 +107,7 @@ class MateriController extends Controller
     {
         return view('pages.materis.edit', [
             'material' => $materi,
+            'kelasList' => Kelas::orderBy('tingkat')->orderBy('name')->get(),
         ]);
     }
 
@@ -107,15 +116,7 @@ class MateriController extends Controller
      */
     public function update(Request $request, Material $materi): RedirectResponse
     {
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string'],
-            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt', 'max:10240'],
-            'is_published' => ['nullable', 'boolean'],
-        ], [
-            'file.mimes' => 'Format file tidak didukung.',
-            'file.max' => 'Ukuran file maksimal 10MB.',
-        ]);
+        $validated = $this->validated($request, $materi);
 
         $filePath = $materi->file_path;
         $fileName = $materi->file_name;
@@ -135,7 +136,9 @@ class MateriController extends Controller
         $materi->update([
             'title' => $validated['title'],
             'slug' => $slug,
-            'body' => $validated['body'],
+            'type' => $validated['type'],
+            'kelas_id' => $validated['kelas_id'] ?? null,
+            'body' => $validated['body'] ?? null,
             'file_path' => $filePath,
             'file_name' => $fileName,
             'is_published' => $request->boolean('is_published', $materi->is_published),
@@ -156,5 +159,47 @@ class MateriController extends Controller
         $materi->delete();
 
         return redirect()->route('materis.index')->with('success', 'Materi berhasil dihapus.');
+    }
+
+    /**
+     * Validate material payload for both tab modes (artikel or file upload).
+     *
+     * @return array<string, mixed>
+     */
+    private function validated(Request $request, ?Material $material = null): array
+    {
+        $request->merge(['type' => $request->input('type', 'artikel')]);
+
+        $rules = [
+            'title' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'string', 'in:artikel,file'],
+            'body' => ['required_if:type,artikel', 'nullable', 'string'],
+            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt', 'max:10240'],
+            'kelas_id' => ['nullable', 'exists:kelas,id'],
+            'is_published' => ['nullable', 'boolean'],
+        ];
+
+        // A file-type material may keep its existing file when editing.
+        if ($material === null || $material->file_path === null) {
+            $rules['file'][] = 'required_if:type,file';
+        }
+
+        return $request->validate($rules, [
+            'body.required_if' => 'Tulis isi materi pada tab artikel.',
+            'file.required_if' => 'Upload file PDF/PPT pada tab upload file.',
+            'file.mimes' => 'Format file tidak didukung.',
+            'file.max' => 'Ukuran file maksimal 10MB.',
+        ]);
+    }
+
+    private function uniqueSlug(string $title): string
+    {
+        $slug = Str::slug($title);
+
+        if (Material::where('slug', $slug)->exists()) {
+            $slug .= '-'.Str::random(5);
+        }
+
+        return $slug;
     }
 }

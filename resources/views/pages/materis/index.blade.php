@@ -44,14 +44,26 @@
                                     {{ $material->title }}
                                 </a>
                             </h5>
-                            @if (! $material->is_published)
-                                <span class="badge badge-secondary">Draft</span>
-                            @endif
+                            <div>
+                                @if (! $material->is_published)
+                                    <span class="badge badge-secondary">Draft</span>
+                                @endif
+                                @if ($material->type === 'file')
+                                    <span class="badge badge-info">File</span>
+                                @endif
+                            </div>
                         </div>
                         <p class="text-muted small mb-2">
                             <i class="fas fa-user mr-1"></i>{{ $material->author->name ?? '-' }}
                             <span class="mx-1">&bull;</span>
                             {{ $material->created_at->format('d M Y') }}
+                            @if ($material->kelas)
+                                <span class="badge badge-warning ml-1">
+                                    <i class="fas fa-door-open mr-1"></i>{{ $material->kelas->name }}
+                                </span>
+                            @else
+                                <span class="badge badge-light border ml-1">Semua Kelas</span>
+                            @endif
                         </p>
                         <p class="text-muted small flex-grow-1">{{ $material->excerpt }}</p>
                         @if ($material->file_name)

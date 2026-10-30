@@ -43,6 +43,32 @@
         </a>
     </li>
 
+    <!-- Nav Item - Jadwal Pengajaran -->
+    <li class="nav-item {{ request()->routeIs('jadwal.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('jadwal.index') }}">
+            <i class="fas fa-fw fa-calendar-alt"></i>
+            <span>Jadwal Mengajar</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Kelas Diajar -->
+    <li class="nav-item {{ request()->routeIs('penugasan.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('penugasan.index') }}">
+            <i class="fas fa-fw fa-chalkboard"></i>
+            <span>Kelas Diajar</span>
+        </a>
+    </li>
+
+    @if (Auth::user()->isTeacher())
+        <!-- Nav Item - Pelanggaran & Pemanggilan -->
+        <li class="nav-item {{ request()->routeIs('pelanggaran.*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('pelanggaran.index') }}">
+                <i class="fas fa-fw fa-exclamation-triangle"></i>
+                <span>Pelanggaran Siswa</span>
+            </a>
+        </li>
+    @endif
+
     @if (Auth::user()->isSuperAdmin())
         <!-- Divider -->
         <hr class="sidebar-divider">
@@ -71,6 +97,38 @@
                 </div>
             </div>
         </li>
+
+        <!-- Nav Item - Master Data -->
+        <li class="nav-item {{ request()->routeIs('siswa.*') || request()->routeIs('guru.*') || request()->routeIs('kelas.*') || request()->routeIs('mapel.*') || request()->routeIs('wali.*') ? 'active' : '' }}">
+            <a class="nav-link {{ request()->routeIs('siswa.*') || request()->routeIs('guru.*') || request()->routeIs('kelas.*') || request()->routeIs('mapel.*') || request()->routeIs('wali.*') ? '' : 'collapsed' }}"
+                href="#" data-toggle="collapse" data-target="#collapseMaster"
+                aria-expanded="{{ request()->routeIs('siswa.*') || request()->routeIs('guru.*') || request()->routeIs('kelas.*') || request()->routeIs('mapel.*') || request()->routeIs('wali.*') ? 'true' : 'false' }}"
+                aria-controls="collapseMaster">
+                <i class="fas fa-fw fa-database"></i>
+                <span>Master Data</span>
+            </a>
+            <div id="collapseMaster" class="collapse {{ request()->routeIs('siswa.*') || request()->routeIs('guru.*') || request()->routeIs('kelas.*') || request()->routeIs('mapel.*') || request()->routeIs('wali.*') ? 'show' : '' }}"
+                aria-labelledby="headingMaster" data-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <h6 class="collapse-header">Data Sekolah:</h6>
+                    <a class="collapse-item {{ request()->routeIs('siswa.*') ? 'active' : '' }}" href="{{ route('siswa.index') }}">
+                        <i class="fas fa-user-graduate fa-sm mr-1"></i> Siswa
+                    </a>
+                    <a class="collapse-item {{ request()->routeIs('guru.*') ? 'active' : '' }}" href="{{ route('guru.index') }}">
+                        <i class="fas fa-chalkboard-teacher fa-sm mr-1"></i> Guru
+                    </a>
+                    <a class="collapse-item {{ request()->routeIs('kelas.*') ? 'active' : '' }}" href="{{ route('kelas.index') }}">
+                        <i class="fas fa-door-open fa-sm mr-1"></i> Kelas
+                    </a>
+                    <a class="collapse-item {{ request()->routeIs('mapel.*') ? 'active' : '' }}" href="{{ route('mapel.index') }}">
+                        <i class="fas fa-book fa-sm mr-1"></i> Mata Pelajaran
+                    </a>
+                    <a class="collapse-item {{ request()->routeIs('wali.*') ? 'active' : '' }}" href="{{ route('wali.index') }}">
+                        <i class="fas fa-user-friends fa-sm mr-1"></i> Wali Murid
+                    </a>
+                </div>
+            </div>
+        </li>
     @endif
 
     <!-- Divider -->
@@ -80,6 +138,14 @@
     <div class="sidebar-heading">
         Akun Saya
     </div>
+
+    <!-- Nav Item - Notifications -->
+    <li class="nav-item {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('notifications.index') }}">
+            <i class="fas fa-fw fa-bell"></i>
+            <span>Notifikasi Saya</span>
+        </a>
+    </li>
 
     <!-- Nav Item - Profile -->
     <li class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">

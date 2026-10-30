@@ -13,6 +13,13 @@
                 @if (! $material->is_published)
                     <span class="badge badge-secondary ml-1">Draft</span>
                 @endif
+                @if ($material->kelas)
+                    <span class="badge badge-warning ml-1">
+                        <i class="fas fa-door-open mr-1"></i> {{ $material->kelas->name }}
+                    </span>
+                @else
+                    <span class="badge badge-light border ml-1">Semua Kelas</span>
+                @endif
             </p>
         </div>
         <div>
@@ -31,15 +38,23 @@
         <div class="col-lg-9">
             <div class="card shadow mb-4">
                 <div class="card-body">
-                    <article class="text-gray-800" style="line-height: 1.75;">
-                        {!! nl2br(e($material->body)) !!}
-                    </article>
+                    @if ($material->body)
+                        <article class="text-gray-800" style="line-height: 1.75;">
+                            {!! nl2br(e($material->body)) !!}
+                        </article>
+                    @endif
 
                     @if ($material->file_path && $material->file_name)
-                        <hr>
+                        @if ($material->body)
+                            <hr>
+                        @endif
                         <a href="{{ asset('storage/' . $material->file_path) }}" class="btn btn-outline-primary btn-sm" download>
-                            <i class="fas fa-download mr-1"></i> Unduh Lampiran: {{ $material->file_name }}
+                            <i class="fas fa-download mr-1"></i> Unduh File Materi: {{ $material->file_name }}
                         </a>
+                    @endif
+
+                    @if (! $material->body && ! $material->file_path)
+                        <p class="text-muted text-center mb-0">Materi ini belum memiliki isi maupun file.</p>
                     @endif
                 </div>
                 <div class="card-footer bg-light small text-muted">

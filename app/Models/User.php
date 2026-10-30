@@ -7,10 +7,12 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'avatar'])]
+#[Fillable(['name', 'email', 'password', 'role', 'avatar', 'nis', 'nip', 'phone', 'kelas_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -28,6 +30,26 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(Kelas::class);
+    }
+
+    public function waliMurids(): HasMany
+    {
+        return $this->hasMany(WaliMurid::class, 'student_id');
+    }
+
+    public function teachingAssignments(): HasMany
+    {
+        return $this->hasMany(TeachingAssignment::class, 'teacher_id');
+    }
+
+    public function reportedViolations(): HasMany
+    {
+        return $this->hasMany(Violation::class, 'reported_by');
     }
 
     /**
