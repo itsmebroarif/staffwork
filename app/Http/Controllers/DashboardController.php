@@ -16,23 +16,23 @@ class DashboardController extends Controller
     public function index(): View
     {
         $user = Auth::user();
-        $totalUsers = User::count();
+
+        $roleCounts = User::query()
+            ->selectRaw('role, COUNT(*) as total')
+            ->groupBy('role')
+            ->pluck('total', 'role');
+
         $recentUsers = User::latest()->take(5)->get();
-        $totalSuperAdmins = User::where('role', 'superadmin')->count();
-        $totalGuru = User::where('role', 'guru')->count();
-        $totalMurid = User::where('role', 'murid')->count();
-        $totalMaterials = Material::count();
-        $totalExams = Exam::count();
 
         return view('pages.Dashboard', [
             'user' => $user,
-            'totalUsers' => $totalUsers,
+            'totalUsers' => $roleCounts->sum(),
             'recentUsers' => $recentUsers,
-            'totalSuperAdmins' => $totalSuperAdmins,
-            'totalGuru' => $totalGuru,
-            'totalMurid' => $totalMurid,
-            'totalMaterials' => $totalMaterials,
-            'totalExams' => $totalExams,
+            'totalSuperAdmins' => (int) $roleCounts->get('superadmin', 0),
+            'totalGuru' => (int) $roleCounts->get('guru', 0),
+            'totalMurid' => (int) $roleCounts->get('murid', 0),
+            'totalMaterials' => Material::count(),
+            'totalExams' => Exam::count(),
         ]);
     }
 }

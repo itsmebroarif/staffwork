@@ -15,7 +15,7 @@ class GuardianController extends Controller
      */
     public function index(): View
     {
-        $guardians = WaliMurid::with('student')->latest()->paginate(10);
+        $guardians = WaliMurid::with('student.kelas')->latest()->paginate(10);
 
         return view('pages.wali.index', [
             'guardians' => $guardians,
@@ -28,7 +28,7 @@ class GuardianController extends Controller
     public function create(): View
     {
         return view('pages.wali.create', [
-            'students' => User::where('role', 'murid')->orderBy('name')->get(),
+            'students' => User::where('role', 'murid')->with('kelas')->orderBy('name')->get(),
         ]);
     }
 
@@ -56,7 +56,7 @@ class GuardianController extends Controller
     {
         return view('pages.wali.edit', [
             'wali' => $wali,
-            'students' => User::where('role', 'murid')->orderBy('name')->get(),
+            'students' => User::where('role', 'murid')->with('kelas')->orderBy('name')->get(),
         ]);
     }
 

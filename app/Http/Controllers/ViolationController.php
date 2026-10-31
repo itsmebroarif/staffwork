@@ -16,7 +16,7 @@ class ViolationController extends Controller
      */
     public function index(): View
     {
-        $violations = Violation::with(['student', 'reporter'])
+        $violations = Violation::with(['student.kelas', 'reporter'])
             ->latest()
             ->paginate(15);
 

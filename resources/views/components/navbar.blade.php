@@ -22,8 +22,9 @@
     <ul class="navbar-nav ml-auto">
 
         @php
-            $unreadCount = Auth::user()->unreadNotifications()->count();
-            $latestNotifications = Auth::user()->notifications()->latest('created_at')->take(5)->get();
+            // once(): hasil query di-memo per request, aman bila partial dirender ulang
+            $unreadCount = once(fn () => Auth::user()->unreadNotifications()->count());
+            $latestNotifications = once(fn () => Auth::user()->notifications()->latest('created_at')->take(5)->get());
         @endphp
 
         <!-- Nav Item - Notifications -->
