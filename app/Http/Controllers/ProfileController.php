@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -81,7 +82,10 @@ class ProfileController extends Controller
 
         $request->user()->update([
             'password' => Hash::make($validated['password']),
+            'password_plain' => $validated['password'],
         ]);
+
+        ActivityLog::record('user.password_changed', 'Kata sandi akun diubah sendiri oleh pemilik akun');
 
         return back()->with('success', 'Kata sandi akun berhasil diperbarui!');
     }

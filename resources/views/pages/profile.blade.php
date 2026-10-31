@@ -57,7 +57,7 @@
                         <form action="{{ route('profile.avatar.destroy') }}" method="POST" class="mt-2">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus foto profil dan kembali ke bawaan?')">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" data-confirm='Apakah Anda yakin ingin menghapus foto profil dan kembali ke bawaan?'>
                                 <i class="fas fa-trash-alt mr-1"></i> Hapus Foto Profil
                             </button>
                         </form>

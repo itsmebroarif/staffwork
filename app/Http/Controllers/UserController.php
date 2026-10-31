@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -55,13 +56,16 @@ class UserController extends Controller
             $avatarPath = $request->file('avatar')->store('avatars', 'public');
         }
 
-        User::create([
+        $createdUser = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $validated['role'],
             'password' => Hash::make($validated['password']),
+            'password_plain' => $validated['password'],
             'avatar' => $avatarPath,
         ]);
+
+        ActivityLog::record('user.created', "Akun '{$createdUser->name}' ({$createdUser->role_name}) didaftarkan", $createdUser);
 
         return redirect()->route('users.index')->with('success', "Akun '{$validated['name']}' dengan role '{$validated['role']}' berhasil didaftarkan!");
     }
@@ -105,9 +109,12 @@ class UserController extends Controller
 
         if (! empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
+            $user->password_plain = $validated['password'];
         }
 
         $user->save();
+
+        ActivityLog::record('user.updated', "Akun '{$user->name}' diperbarui (role: {$user->role_name})", $user);
 
         return redirect()->route('users.index')->with('success', "Data pengguna '{$user->name}' berhasil diperbarui!");
     }
@@ -126,6 +133,9 @@ class UserController extends Controller
         }
 
         $userName = $user->name;
+
+        ActivityLog::record('user.deleted', "Akun '{$userName}' dihapus", null, $request->user());
+
         $user->delete();
 
         return redirect()->route('users.index')->with('success', "Akun '{$userName}' telah berhasil dihapus.");

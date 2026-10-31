@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Exam;
 use App\Models\Question;
 use Illuminate\Contracts\View\View;
@@ -65,7 +66,7 @@ class ExamController extends Controller
             'questions.*.correct_answer.in' => 'Jawaban benar harus salah satu dari A, B, C, atau D.',
         ]);
 
-        DB::transaction(function () use ($request, $validated) {
+        $exam = DB::transaction(function () use ($request, $validated) {
             $exam = Exam::create([
                 'user_id' => $request->user()->id,
                 'title' => $validated['title'],
@@ -87,7 +88,11 @@ class ExamController extends Controller
                     'order' => $index + 1,
                 ]);
             }
+
+            return $exam;
         });
+
+        ActivityLog::record('exam.created', "{$exam->type_label} '{$exam->title}' dibuat dengan {$exam->questions()->count()} soal", $exam);
 
         return redirect()->route('exams.index')->with('success', 'Tugas/Ujian beserta soal berhasil disimpan!');
     }
@@ -164,6 +169,8 @@ class ExamController extends Controller
             }
         });
 
+        ActivityLog::record('exam.updated', "{$exam->type_label} '{$exam->title}' diperbarui", $exam);
+
         return redirect()->route('exams.index')->with('success', 'Tugas/Ujian berhasil diperbarui!');
     }
 
@@ -172,6 +179,8 @@ class ExamController extends Controller
      */
     public function destroy(Exam $exam): RedirectResponse
     {
+        ActivityLog::record('exam.deleted', "{$exam->type_label} '{$exam->title}' dihapus", null);
+
         $exam->delete();
 
         return redirect()->route('exams.index')->with('success', 'Tugas/Ujian berhasil dihapus.');

@@ -31,7 +31,9 @@
                             <th style="width: 70px;" class="text-center">Foto</th>
                             <th>Nama Lengkap</th>
                             <th>Alamat Email</th>
+                            <th style="width: 150px;">Bidang / Keahlian</th>
                             <th style="width: 130px;" class="text-center">Role / Hak Akses</th>
+                            <th style="width: 190px;" class="text-center">Kata Sandi</th>
                             <th style="width: 150px;">Tanggal Daftar</th>
                             <th style="width: 140px;" class="text-center">Aksi</th>
                         </tr>
@@ -54,10 +56,41 @@
                                     @endif
                                 </td>
                                 <td class="align-middle text-muted">{{ $u->email }}</td>
+                                <td class="align-middle small">
+                                    @if ($u->bidang)
+                                        <span class="badge badge-light border px-2 py-1">
+                                            <i class="fas fa-briefcase fa-sm mr-1 text-gray-500"></i>{{ $u->bidang }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td class="text-center align-middle">
                                     <span class="badge {{ $u->role_badge_class }} px-2 py-1">
                                         {{ $u->role_name }}
                                     </span>
+                                </td>
+                                <td class="text-center align-middle">
+                                    @if ($u->password_plain)
+                                        <div class="input-group input-group-sm">
+                                            <input type="password" readonly
+                                                id="password-{{ $u->id }}"
+                                                value="{{ $u->password_plain }}"
+                                                class="form-control form-control-sm bg-light text-center font-weight-bold"
+                                                style="letter-spacing: 1px;">
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                    title="Tampilkan / sembunyikan kata sandi"
+                                                    data-password-target="password-{{ $u->id }}">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-muted small">
+                                            <i class="fas fa-lock mr-1"></i>Tidak tersedia
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="align-middle small text-muted">
                                     {{ $u->created_at ? $u->created_at->format('d M Y, H:i') : '-' }}
@@ -69,7 +102,7 @@
                                         </a>
                                         @if ($u->id !== Auth::id())
                                             <form action="{{ route('users.destroy', $u) }}" method="POST" class="d-inline"
-                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun {{ $u->name }}?')">
+                                                data-confirm='Apakah Anda yakin ingin menghapus akun {{ $u->name }}?'>
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-outline-danger" title="Hapus Akun">
@@ -82,7 +115,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">Belum ada akun pengguna lain.</td>
+                                <td colspan="9" class="text-center text-muted py-4">Belum ada akun pengguna lain.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -96,4 +129,20 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(document).on('click', '[data-password-target]', function () {
+        var input = document.getElementById($(this).data('password-target'));
+        var icon = $(this).find('i');
+
+        if (!input) {
+            return;
+        }
+
+        input.type = input.type === 'password' ? 'text' : 'password';
+        icon.toggleClass('fa-eye fa-eye-slash');
+    });
+</script>
+@endpush
 

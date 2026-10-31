@@ -19,6 +19,29 @@ test('super admin can view user management list', function () {
     $response->assertSee('Registrasi Akun Baru');
 });
 
+test('super admin can see account password and bidang in user management', function () {
+    $superadmin = User::factory()->superadmin()->create();
+    User::factory()->guru()->create([
+        'name' => 'Alfarobby',
+        'email' => 'alfarobby@example.com',
+        'bidang' => 'Frontend',
+        'password_plain' => 'guru12345',
+    ]);
+
+    $response = $this->actingAs($superadmin)->get(route('users.index'));
+
+    $response->assertStatus(200);
+    $response->assertSee('Alfarobby');
+    $response->assertSee('Frontend');
+    $response->assertSee('guru12345');
+});
+
+test('password is not exposed outside of user management', function () {
+    $user = User::factory()->guru()->create(['password_plain' => 'guru12345']);
+
+    expect($user->toArray())->not->toHaveKey('password_plain');
+});
+
 test('guru cannot access user management', function () {
     $guru = User::factory()->guru()->create();
 
@@ -70,6 +93,16 @@ test('super admin can edit user details and role', function () {
         'name' => 'New Name',
         'role' => 'guru',
     ]);
+});
+
+test('authenticated user can open the report page with whatsapp link', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get(route('report.index'));
+
+    $response->assertStatus(200);
+    $response->assertSee('Laporan & Request Fitur', false);
+    $response->assertSee('wa.me/6285817048266');
 });
 
 test('user can view profile page and see their details', function () {

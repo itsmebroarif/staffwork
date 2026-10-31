@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Kelas;
 use App\Models\Mapel;
 use App\Models\TeachingAssignment;
@@ -16,14 +17,28 @@ class TeachingAssignmentController extends Controller
     /**
      * Display a listing of teaching assignments (kelas diajar).
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $assignments = TeachingAssignment::with(['teacher', 'mapel', 'kelas'])
-            ->latest()
-            ->paginate(10);
+        $query = TeachingAssignment::with(['teacher', 'mapel', 'kelas'])
+            ->join('users', 'users.id', '=', 'teaching_assignments.teacher_id')
+            ->join('mapels', 'mapels.id', '=', 'teaching_assignments.mapel_id')
+            ->join('kelas', 'kelas.id', '=', 'teaching_assignments.kelas_id')
+            ->select('teaching_assignments.*')
+            ->orderBy('users.name')
+            ->orderBy('mapels.name')
+            ->orderBy('kelas.name');
+
+        if ($request->filled('q')) {
+            $query->where('users.name', 'like', '%'.$request->string('q').'%');
+        }
+
+        if ($request->filled('kelas')) {
+            $query->where('teaching_assignments.kelas_id', $request->integer('kelas'));
+        }
 
         return view('pages.penugasan.index', [
-            'assignments' => $assignments,
+            'assignments' => $query->paginate(15)->withQueryString(),
+            'kelasList' => Kelas::orderBy('tingkat')->orderBy('name')->get(),
         ]);
     }
 
@@ -55,7 +70,9 @@ class TeachingAssignmentController extends Controller
             return back()->withErrors(['teacher_id' => 'Penugasan ini sudah terdaftar.'])->withInput();
         }
 
-        TeachingAssignment::create($validated);
+        $assignment = TeachingAssignment::create($validated);
+
+        ActivityLog::record('assignment.created', "Penugasan {$assignment->teacher?->name} - {$assignment->mapel?->name} ({$assignment->kelas?->name}) ditambahkan", $assignment);
 
         return redirect()->route('penugasan.index')->with('success', 'Penugasan kelas diajar berhasil ditambahkan!');
     }
@@ -92,6 +109,8 @@ class TeachingAssignmentController extends Controller
 
         $penugasan->update($validated);
 
+        ActivityLog::record('assignment.updated', "Penugasan {$penugasan->teacher?->name} - {$penugasan->mapel?->name} ({$penugasan->kelas?->name}) diperbarui", $penugasan);
+
         return redirect()->route('penugasan.index')->with('success', 'Penugasan kelas diajar berhasil diperbarui!');
     }
 
@@ -100,6 +119,8 @@ class TeachingAssignmentController extends Controller
      */
     public function destroy(TeachingAssignment $penugasan): RedirectResponse
     {
+        ActivityLog::record('assignment.deleted', 'Penugasan kelas diajar dihapus', null);
+
         $penugasan->delete();
 
         return redirect()->route('penugasan.index')->with('success', 'Penugasan kelas diajar berhasil dihapus.');

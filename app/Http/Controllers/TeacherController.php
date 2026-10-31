@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -56,11 +57,14 @@ class TeacherController extends Controller
             'nip.unique' => 'NIP sudah terdaftar.',
         ]);
 
-        User::create([
+        $createdGuru = User::create([
             ...$validated,
             'role' => 'guru',
             'password' => Hash::make($validated['password']),
+            'password_plain' => $validated['password'],
         ]);
+
+        ActivityLog::record('user.created', "Akun guru '{$createdGuru->name}' didaftarkan", $createdGuru);
 
         return redirect()->route('guru.index')->with('success', "Akun guru '{$validated['name']}' berhasil didaftarkan!");
     }
@@ -97,9 +101,12 @@ class TeacherController extends Controller
 
         if (! empty($validated['password'])) {
             $guru->password = Hash::make($validated['password']);
+            $guru->password_plain = $validated['password'];
         }
 
         $guru->save();
+
+        ActivityLog::record('user.updated', "Akun guru '{$guru->name}' diperbarui", $guru);
 
         return redirect()->route('guru.index')->with('success', "Data guru '{$guru->name}' berhasil diperbarui!");
     }
@@ -112,6 +119,8 @@ class TeacherController extends Controller
         if ($request->user()->id === $guru->id) {
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri saat sedang login!');
         }
+
+        ActivityLog::record('user.deleted', "Akun guru '{$guru->name}' dihapus", null);
 
         $guru->delete();
 

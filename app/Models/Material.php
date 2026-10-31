@@ -20,6 +20,7 @@ class Material extends Model
         'slug',
         'type',
         'kelas_id',
+        'mapel_id',
         'body',
         'file_path',
         'file_name',
@@ -46,6 +47,11 @@ class Material extends Model
     public function kelas(): BelongsTo
     {
         return $this->belongsTo(Kelas::class);
+    }
+
+    public function mapel(): BelongsTo
+    {
+        return $this->belongsTo(Mapel::class);
     }
 
     /**

@@ -57,14 +57,27 @@
                     </div>
                     <div class="card-body">
                         <p class="font-weight-bold text-gray-800 mb-3">{!! nl2br(e($question->question)) !!}</p>
-                        <ul class="list-unstyled mb-0">
-                            @foreach ($question->options as $letter => $text)
-                                <li class="mb-1">
-                                    <span class="badge badge-light border mr-2">{{ $letter }}</span>
-                                    {{ $text }}
-                                </li>
-                            @endforeach
-                        </ul>
+                        @if (Auth::user()->isTeacher())
+                            <ul class="list-unstyled mb-0">
+                                @foreach ($question->options as $letter => $text)
+                                    <li class="mb-1">
+                                        <span class="badge badge-light border mr-2">{{ $letter }}</span>
+                                        {{ $text }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <div class="quiz-options" data-question-id="{{ $question->id }}"
+                                data-correct="{{ $question->correct_answer }}">
+                                @foreach ($question->options as $letter => $text)
+                                    <label class="quiz-option">
+                                        <input type="radio" name="answers[{{ $question->id }}]" value="{{ $letter }}">
+                                        <span class="quiz-letter">{{ $letter }}</span>
+                                        <span class="quiz-text">{{ $text }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -105,8 +118,131 @@
                             <td>{{ $exam->created_at->format('d M Y') }}</td>
                         </tr>
                     </table>
+
+                    @if (! Auth::user()->isTeacher() && $exam->questions->isNotEmpty())
+                        <hr>
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Terjawab</span>
+                            <strong><span id="answeredCount">0</span>/{{ $exam->questions->count() }}</strong>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-primary" id="answeredProgress" style="width: 0%;"></div>
+                        </div>
+                        <button type="button" class="btn btn-success btn-block font-weight-bold" id="finishQuiz">
+                            <i class="fas fa-check-circle mr-1"></i> Selesai &amp; Lihat Hasil
+                        </button>
+                        <small class="form-text text-muted text-center mt-2 mb-0">
+                            Pilih satu jawaban pada setiap soal, lalu tekan tombol di atas.
+                        </small>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var questionGroups = Array.prototype.slice.call(document.querySelectorAll('.quiz-options'));
+        var finishButton = document.getElementById('finishQuiz');
+
+        if (!finishButton || questionGroups.length === 0) {
+            return;
+        }
+
+        var answeredCount = document.getElementById('answeredCount');
+        var answeredProgress = document.getElementById('answeredProgress');
+
+        function updateProgress() {
+            var answered = questionGroups.filter(function (group) {
+                return group.querySelector('input:checked') !== null;
+            }).length;
+
+            answeredCount.textContent = answered;
+            answeredProgress.style.width = Math.round((answered / questionGroups.length) * 100) + '%';
+
+            return answered;
+        }
+
+        questionGroups.forEach(function (group) {
+            group.querySelectorAll('input[type="radio"]').forEach(function (input) {
+                input.addEventListener('change', function () {
+                    group.querySelectorAll('.quiz-option').forEach(function (option) {
+                        option.classList.remove('is-selected');
+                    });
+
+                    input.closest('.quiz-option').classList.add('is-selected');
+                    updateProgress();
+                });
+            });
+        });
+
+        finishButton.addEventListener('click', function () {
+            var answered = updateProgress();
+
+            if (answered === 0) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Belum ada jawaban',
+                        text: 'Pilih salah satu jawaban terlebih dahulu.'
+                    });
+                } else {
+                    alert('Pilih salah satu jawaban terlebih dahulu.');
+                }
+
+                return;
+            }
+
+            var correctCount = 0;
+
+            questionGroups.forEach(function (group) {
+                var correct = group.dataset.correct;
+                var selected = group.querySelector('input:checked');
+
+                group.querySelectorAll('.quiz-option').forEach(function (option) {
+                    var input = option.querySelector('input');
+                    option.classList.add('is-locked');
+
+                    if (input.value === correct) {
+                        option.classList.add('is-correct');
+                    }
+
+                    if (selected && input === selected && input.value !== correct) {
+                        option.classList.add('is-wrong');
+                    }
+                });
+
+                if (selected && selected.value === correct) {
+                    correctCount++;
+                }
+            });
+
+            questionGroups.forEach(function (group) {
+                group.querySelectorAll('input').forEach(function (input) {
+                    input.disabled = true;
+                });
+            });
+
+            finishButton.disabled = true;
+
+            var total = questionGroups.length;
+            var score = Math.round((correctCount / total) * 100);
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: score >= 70 ? 'success' : 'warning',
+                    title: 'Hasil Pengerjaan',
+                    html: '<div style="font-size:2rem;font-weight:800">' + score + '</div>'
+                        + '<div class="text-muted mb-2">Nilai</div>'
+                        + '<div>Jawaban benar <strong>' + correctCount + '</strong> dari <strong>' + total + '</strong> soal</div>',
+                    confirmButtonText: 'Tutup'
+                });
+            } else {
+                alert('Nilai: ' + score + '\nJawaban benar: ' + correctCount + ' dari ' + total);
+            }
+        });
+    });
+</script>
+@endpush

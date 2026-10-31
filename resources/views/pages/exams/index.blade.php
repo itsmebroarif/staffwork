@@ -90,7 +90,7 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <form action="{{ route('exams.destroy', $exam) }}" method="POST" class="d-inline"
-                                                onsubmit="return confirm('Yakin hapus tugas/ujian ini?')">
+                                                data-confirm='Yakin hapus tugas/ujian ini?'>
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-outline-danger" title="Hapus">

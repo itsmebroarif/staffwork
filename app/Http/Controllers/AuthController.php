@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -41,6 +42,8 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
+            ActivityLog::record('login', 'Masuk ke aplikasi sebagai '.Auth::user()->role_name, Auth::user(), Auth::user());
+
             return redirect()->intended(route('dashboard'));
         }
 
@@ -77,8 +80,11 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'password_plain' => $validated['password'],
             'role' => 'superadmin',
         ]);
+
+        ActivityLog::record('user.created', "Akun '{$user->name}' didaftarkan melalui halaman registrasi", $user, $user);
 
         Auth::login($user);
         $request->session()->regenerate();
@@ -91,6 +97,10 @@ class AuthController extends Controller
      */
     public function logout(Request $request): RedirectResponse
     {
+        if (Auth::check()) {
+            ActivityLog::record('logout', 'Keluar dari aplikasi', null, Auth::user());
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

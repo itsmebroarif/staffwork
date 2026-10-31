@@ -83,7 +83,7 @@
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm"
                                             title="Hapus permanen beserta file pendukungnya"
-                                            onclick="return confirm('HAPUS PERMANEN? Materi beserta file pendukungnya tidak dapat dipulihkan lagi.');">
+                                            data-confirm='HAPUS PERMANEN? Materi beserta file pendukungnya tidak dapat dipulihkan lagi.'>
                                             <i class="fas fa-times fa-sm mr-1"></i> Hapus Permanen
                                         </button>
                                     </form>

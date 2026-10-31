@@ -17,20 +17,37 @@
     @enderror
 </div>
 
-<div class="form-group">
-    <label for="kelas_id" class="font-weight-bold text-gray-700">Kelas Target</label>
-    <select name="kelas_id" id="kelas_id" class="form-control @error('kelas_id') is-invalid @enderror">
-        <option value="">Semua Kelas (Materi Umum)</option>
-        @foreach ($kelasList as $kelas)
-            <option value="{{ $kelas->id }}" {{ (string) old('kelas_id', $record->kelas_id ?? '') === (string) $kelas->id ? 'selected' : '' }}>
-                {{ $kelas->name }} (Tingkat {{ $kelas->tingkat }})
-            </option>
-        @endforeach
-    </select>
-    <small class="form-text text-muted">Materi dengan kelas target hanya bisa dibuka oleh siswa pada tingkat tersebut.</small>
-    @error('kelas_id')
-        <div class="text-danger small mt-1">{{ $message }}</div>
-    @enderror
+<div class="form-row">
+    <div class="form-group col-md-6">
+        <label for="mapel_id" class="font-weight-bold text-gray-700">Mata Pelajaran</label>
+        <select name="mapel_id" id="mapel_id" class="form-control @error('mapel_id') is-invalid @enderror">
+            <option value="">Tanpa Mapel (Materi Umum)</option>
+            @foreach ($mapels as $mapel)
+                <option value="{{ $mapel->id }}" {{ (string) old('mapel_id', $record->mapel_id ?? '') === (string) $mapel->id ? 'selected' : '' }}>
+                    {{ $mapel->name }} ({{ $mapel->code }})
+                </option>
+            @endforeach
+        </select>
+        <small class="form-text text-muted">Dipakai untuk filter dan pengurutan materi per mata pelajaran.</small>
+        @error('mapel_id')
+            <div class="text-danger small mt-1">{{ $message }}</div>
+        @enderror
+    </div>
+    <div class="form-group col-md-6">
+        <label for="kelas_id" class="font-weight-bold text-gray-700">Kelas Target</label>
+        <select name="kelas_id" id="kelas_id" class="form-control @error('kelas_id') is-invalid @enderror">
+            <option value="">Semua Kelas (Materi Umum)</option>
+            @foreach ($kelasList as $kelas)
+                <option value="{{ $kelas->id }}" {{ (string) old('kelas_id', $record->kelas_id ?? '') === (string) $kelas->id ? 'selected' : '' }}>
+                    {{ $kelas->name }} (Tingkat {{ $kelas->tingkat }})
+                </option>
+            @endforeach
+        </select>
+        <small class="form-text text-muted">Materi dengan kelas target hanya bisa dibuka oleh siswa pada tingkat tersebut.</small>
+        @error('kelas_id')
+            <div class="text-danger small mt-1">{{ $message }}</div>
+        @enderror
+    </div>
 </div>
 
 <!-- Tabs: Tulis Artikel (WYSIWYG) / Input Gambar / Upload File -->

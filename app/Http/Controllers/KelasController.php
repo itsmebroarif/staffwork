@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Kelas;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -44,7 +45,9 @@ class KelasController extends Controller
             'name.unique' => 'Nama kelas sudah digunakan.',
         ]);
 
-        Kelas::create($validated);
+        $kelas = Kelas::create($validated);
+
+        ActivityLog::record('kelas.created', "Kelas '{$kelas->name}' ditambahkan", $kelas);
 
         return redirect()->route('kelas.index')->with('success', "Kelas '{$validated['name']}' berhasil ditambahkan!");
     }
@@ -73,6 +76,8 @@ class KelasController extends Controller
 
         $kelas->update($validated);
 
+        ActivityLog::record('kelas.updated', "Kelas '{$kelas->name}' diperbarui", $kelas);
+
         return redirect()->route('kelas.index')->with('success', "Kelas '{$kelas->name}' berhasil diperbarui!");
     }
 
@@ -82,6 +87,9 @@ class KelasController extends Controller
     public function destroy(Kelas $kelas): RedirectResponse
     {
         $name = $kelas->name;
+
+        ActivityLog::record('kelas.deleted', "Kelas '{$name}' dihapus", null);
+
         $kelas->delete();
 
         return redirect()->route('kelas.index')->with('success', "Kelas '{$name}' berhasil dihapus.");

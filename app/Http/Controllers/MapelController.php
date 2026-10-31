@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Mapel;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -42,7 +43,9 @@ class MapelController extends Controller
             'name.unique' => 'Nama mapel sudah digunakan.',
         ]);
 
-        Mapel::create($validated);
+        $mapel = Mapel::create($validated);
+
+        ActivityLog::record('mapel.created', "Mapel '{$mapel->name}' ditambahkan", $mapel);
 
         return redirect()->route('mapel.index')->with('success', "Mapel '{$validated['name']}' berhasil ditambahkan!");
     }
@@ -72,6 +75,8 @@ class MapelController extends Controller
 
         $mapel->update($validated);
 
+        ActivityLog::record('mapel.updated', "Mapel '{$mapel->name}' diperbarui", $mapel);
+
         return redirect()->route('mapel.index')->with('success', "Mapel '{$mapel->name}' berhasil diperbarui!");
     }
 
@@ -81,6 +86,8 @@ class MapelController extends Controller
     public function destroy(Mapel $mapel): RedirectResponse
     {
         $name = $mapel->name;
+        ActivityLog::record('mapel.deleted', "Mapel '{$mapel->name}' dihapus", null);
+
         $mapel->delete();
 
         return redirect()->route('mapel.index')->with('success', "Mapel '{$name}' berhasil dihapus.");

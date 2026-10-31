@@ -21,18 +21,47 @@
         @endif
     </div>
 
-    <!-- Search -->
+    <!-- Filter, mapel, dan urutan -->
     <div class="card shadow mb-4">
-        <div class="card-body py-2">
-            <form action="{{ route('materis.index') }}" method="GET" class="form-inline">
-                <div class="input-group w-100">
-                    <input type="text" name="q" class="form-control bg-light border-0 small"
-                        placeholder="Cari judul atau isi materi..." value="{{ request('q') }}">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit">
-                            <i class="fas fa-search fa-sm"></i>
-                        </button>
+        <div class="card-body py-3">
+            <form action="{{ route('materis.index') }}" method="GET" class="form-row align-items-end">
+                <div class="form-group col-lg-5 col-md-6 mb-2 mb-md-0">
+                    <label for="q" class="small font-weight-bold text-gray-700 mb-1">Cari Materi</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="q" id="q" class="form-control bg-light"
+                            placeholder="Cari judul atau isi materi..." value="{{ request('q') }}">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search fa-sm"></i>
+                            </button>
+                        </div>
                     </div>
+                </div>
+                <div class="form-group col-lg-3 col-md-6 mb-2 mb-md-0">
+                    <label for="mapel" class="small font-weight-bold text-gray-700 mb-1">Mata Pelajaran</label>
+                    <select name="mapel" id="mapel" class="form-control form-control-sm bg-light">
+                        <option value="">Semua Mapel (Show All)</option>
+                        @foreach ($mapels as $mapel)
+                            <option value="{{ $mapel->id }}" {{ (string) request('mapel') === (string) $mapel->id ? 'selected' : '' }}>
+                                {{ $mapel->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group col-lg-2 col-md-6 mb-2 mb-md-0">
+                    <label for="sort" class="small font-weight-bold text-gray-700 mb-1">Urutkan</label>
+                    <select name="sort" id="sort" class="form-control form-control-sm bg-light">
+                        <option value="newest" {{ request('sort', 'newest') === 'newest' ? 'selected' : '' }}>Terbaru</option>
+                        <option value="teacher" {{ request('sort') === 'teacher' ? 'selected' : '' }}>Nama Pengajar</option>
+                        <option value="mapel" {{ request('sort') === 'mapel' ? 'selected' : '' }}>Nama Mapel</option>
+                        <option value="title" {{ request('sort') === 'title' ? 'selected' : '' }}>Judul Materi</option>
+                        <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Terlama</option>
+                    </select>
+                </div>
+                <div class="form-group col-lg-2 col-md-6 mb-0">
+                    <button type="submit" class="btn btn-primary btn-sm btn-block">
+                        <i class="fas fa-filter fa-sm mr-1"></i> Terapkan
+                    </button>
                 </div>
             </form>
         </div>
@@ -40,7 +69,8 @@
 
     <div class="row">
         @forelse ($materials as $material)
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up"
+                data-aos-delay="{{ min(($loop->index % 3) * 80, 160) }}">
                 <div class="card shadow h-100">
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -65,6 +95,11 @@
                             <i class="fas fa-user mr-1"></i>{{ $material->author->name ?? '-' }}
                             <span class="mx-1">&bull;</span>
                             {{ $material->created_at->format('d M Y') }}
+                            @if ($material->mapel)
+                                <span class="badge badge-primary ml-1">
+                                    <i class="fas fa-book mr-1"></i>{{ $material->mapel->name }}
+                                </span>
+                            @endif
                             @if ($material->kelas)
                                 <span class="badge badge-warning ml-1">
                                     <i class="fas fa-door-open mr-1"></i>{{ $material->kelas->name }}
@@ -89,7 +124,7 @@
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-outline-danger"
                                         title="Hapus materi (bisa dipulihkan dari History Bin)"
-                                        onclick="return confirm('Pindahkan materi ini ke History Bin? Materi masih bisa dipulihkan di menu History Bin.');">
+                                        data-confirm='Pindahkan materi ini ke History Bin? Materi masih bisa dipulihkan di menu History Bin.'>
                                         <i class="fas fa-trash-alt fa-sm"></i>
                                     </button>
                                 </form>

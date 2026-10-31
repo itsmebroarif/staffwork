@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\MasterImportController;
 use App\Http\Controllers\MateriController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TeachingAssignmentController;
@@ -78,6 +80,9 @@ Route::middleware('auth')->group(function () {
         ProfileController::class,
         'stopSimulation',
     ])->name('profile.simulate.stop');
+
+    // Laporan bug & permintaan fitur (semua pengguna, dikirim via WhatsApp)
+    Route::get('/report', [ReportController::class, 'index'])->name('report.index');
 
     // Notifications (all authenticated users)
     Route::get('/notifications', [NotificationController::class, 'index'])->name(
@@ -186,6 +191,8 @@ Route::middleware('auth')->group(function () {
 
     // Super Admin Only: User Management, Master Data & Import
     Route::middleware('superadmin')->group(function () {
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity.index');
+
         Route::resource('users', UserController::class)->except(['show']);
 
         // Master data

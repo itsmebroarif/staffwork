@@ -63,7 +63,7 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <form action="{{ route('wali.destroy', $guardian) }}" method="POST" class="d-inline"
-                                            onsubmit="return confirm('Hapus data wali {{ $guardian->name }}?')">
+                                            data-confirm='Hapus data wali {{ $guardian->name }}?'>
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-outline-danger" title="Hapus Wali">

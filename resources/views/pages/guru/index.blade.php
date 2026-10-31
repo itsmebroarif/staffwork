@@ -71,7 +71,7 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <form action="{{ route('guru.destroy', $guru) }}" method="POST" class="d-inline"
-                                            onsubmit="return confirm('Hapus akun guru {{ $guru->name }}?')">
+                                            data-confirm='Hapus akun guru {{ $guru->name }}?'>
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-outline-danger" title="Hapus Guru">

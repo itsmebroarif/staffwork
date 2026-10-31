@@ -18,6 +18,11 @@
                         <i class="fas fa-image mr-1"></i> Gambar
                     </span>
                 @endif
+                @if ($material->mapel)
+                    <span class="badge badge-primary ml-1">
+                        <i class="fas fa-book mr-1"></i> {{ $material->mapel->name }}
+                    </span>
+                @endif
                 @if ($material->kelas)
                     <span class="badge badge-warning ml-1">
                         <i class="fas fa-door-open mr-1"></i> {{ $material->kelas->name }}
@@ -36,7 +41,7 @@
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm mr-1"
-                        onclick="return confirm('Pindahkan materi ini ke History Bin? Materi masih bisa dipulihkan dari menu History Bin.');">
+                        data-confirm='Pindahkan materi ini ke History Bin? Materi masih bisa dipulihkan dari menu History Bin.'>
                         <i class="fas fa-trash-alt fa-sm mr-1"></i> Hapus
                     </button>
                 </form>

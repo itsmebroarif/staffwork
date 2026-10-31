@@ -1,8 +1,12 @@
 <?php
 
 use App\Models\Exam;
+use App\Models\Kelas;
+use App\Models\Mapel;
 use App\Models\Material;
 use App\Models\Question;
+use App\Models\TeachingAssignment;
+use App\Models\TeachingSchedule;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -239,6 +243,77 @@ test('guru can update exam questions', function () {
     expect($exam->title)->toBe('Tugas Updated');
     expect($exam->questions)->toHaveCount(1);
     expect($exam->questions->first()->question)->toBe('Soal baru?');
+});
+
+test('murid can answer multiple choice questions in the exam simulation', function () {
+    $exam = Exam::factory()->tugas()->create();
+    Question::factory()->create(['exam_id' => $exam->id]);
+    $murid = User::factory()->murid()->create();
+
+    $response = $this->actingAs($murid)->get(route('exams.show', $exam));
+
+    $response->assertStatus(200);
+    $response->assertSee('quiz-option', false);
+    $response->assertSee('Selesai &amp; Lihat Hasil', false);
+});
+
+test('materials can be filtered by mapel and sorted by teacher', function () {
+    $guruFrontend = User::factory()->guru()->create(['name' => 'Alfarobby']);
+    $guruBackend = User::factory()->guru()->create(['name' => 'Hanif']);
+    $frontend = Mapel::factory()->create(['name' => 'Front-end']);
+    $backend = Mapel::factory()->create(['name' => 'Back-end']);
+
+    Material::factory()->create(['title' => 'Materi Front-end', 'user_id' => $guruFrontend->id, 'mapel_id' => $frontend->id]);
+    Material::factory()->create(['title' => 'Materi Back-end', 'user_id' => $guruBackend->id, 'mapel_id' => $backend->id]);
+
+    $superadmin = User::factory()->superadmin()->create();
+
+    $response = $this->actingAs($superadmin)->get(route('materis.index', [
+        'mapel' => $frontend->id,
+        'sort' => 'teacher',
+    ]));
+
+    $response->assertStatus(200);
+    $response->assertSee('Materi Front-end');
+    $response->assertDontSee('Materi Back-end');
+    $response->assertSee('Semua Mapel (Show All)');
+});
+
+test('jadwal page provides a weekly calendar with teacher, mapel, and time', function () {
+    $assignment = TeachingAssignment::factory()->create();
+    TeachingSchedule::factory()->create([
+        'assignment_id' => $assignment->id,
+        'day' => 'senin',
+        'start_time' => '07:00',
+        'end_time' => '08:30',
+    ]);
+
+    $superadmin = User::factory()->superadmin()->create();
+
+    $response = $this->actingAs($superadmin)->get(route('jadwal.index'));
+
+    $response->assertStatus(200);
+    $response->assertSee('Kalender Mingguan');
+    $response->assertSee($assignment->teacher->name);
+    $response->assertSee($assignment->mapel->name);
+});
+
+test('penugasan page groups repeated teacher and mapel rows', function () {
+    $teacher = User::factory()->guru()->create(['name' => 'Alfarobby']);
+    $mapel = Mapel::factory()->create(['name' => 'Front-end']);
+    $kelasSatu = Kelas::factory()->create(['name' => 'X RPL 1']);
+    $kelasDua = Kelas::factory()->create(['name' => 'XI RPL 1']);
+
+    TeachingAssignment::factory()->create(['teacher_id' => $teacher->id, 'mapel_id' => $mapel->id, 'kelas_id' => $kelasSatu->id]);
+    TeachingAssignment::factory()->create(['teacher_id' => $teacher->id, 'mapel_id' => $mapel->id, 'kelas_id' => $kelasDua->id]);
+
+    $superadmin = User::factory()->superadmin()->create();
+
+    $response = $this->actingAs($superadmin)->get(route('penugasan.index'));
+
+    $response->assertStatus(200);
+    $response->assertSee('Alfarobby');
+    $response->assertSee('rowspan="2"', false);
 });
 
 test('guru can delete material to the history bin', function () {

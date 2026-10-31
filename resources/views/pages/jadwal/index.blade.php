@@ -21,6 +21,24 @@
 
     @include('pages.master._import-alerts')
 
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="tab-jadwal-tabel" data-toggle="tab" href="#jadwal-tabel" role="tab"
+                aria-controls="jadwal-tabel" aria-selected="true">
+                <i class="fas fa-table mr-1"></i> Tabel Jadwal
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="tab-jadwal-kalender" data-toggle="tab" href="#jadwal-kalender" role="tab"
+                aria-controls="jadwal-kalender" aria-selected="false">
+                <i class="fas fa-calendar-week mr-1"></i> Kalender Mingguan
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="jadwal-tabel" role="tabpanel" aria-labelledby="tab-jadwal-tabel">
+
     <!-- Data Table Card -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex align-items-center justify-content-between">
@@ -75,7 +93,7 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <form action="{{ route('jadwal.destroy', $schedule) }}" method="POST" class="d-inline"
-                                                onsubmit="return confirm('Hapus jadwal ini?')">
+                                                data-confirm='Hapus jadwal ini?'>
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-outline-danger" title="Hapus Jadwal">
@@ -97,6 +115,52 @@
 
             <div class="d-flex justify-content-end mt-3">
                 {{ $schedules->links() }}
+            </div>
+        </div>
+    </div>
+
+        </div>
+        <div class="tab-pane fade" id="jadwal-kalender" role="tabpanel" aria-labelledby="tab-jadwal-kalender">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-calendar-week mr-1"></i> Kalender Mingguan
+                    </h6>
+                    <span class="badge badge-light border">{{ $calendarSchedules->count() }} Jadwal</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @foreach (['senin' => 'Senin', 'selasa' => 'Selasa', 'rabu' => 'Rabu', 'kamis' => 'Kamis', 'jumat' => 'Jumat', 'sabtu' => 'Sabtu'] as $day => $label)
+                            <div class="col-xl col-lg-4 col-md-6 mb-3">
+                                <div class="card h-100 schedule-day-card">
+                                    <div class="card-header py-2 text-center bg-light">
+                                        <strong class="small text-gray-800">{{ $label }}</strong>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        @forelse ($calendarSchedules->where('day', $day) as $schedule)
+                                            <div class="schedule-chip mb-2">
+                                                <div class="small font-weight-bold text-primary">
+                                                    {{ \Illuminate\Support\Carbon::parse($schedule->start_time)->format('H:i') }}
+                                                    &ndash;
+                                                    {{ \Illuminate\Support\Carbon::parse($schedule->end_time)->format('H:i') }}
+                                                </div>
+                                                <div class="font-weight-bold small text-gray-900">
+                                                    {{ $schedule->assignment?->mapel?->name ?? '-' }}
+                                                </div>
+                                                <div class="small text-muted">
+                                                    <i class="fas fa-user fa-sm mr-1"></i>{{ $schedule->assignment?->teacher?->name ?? '-' }}
+                                                </div>
+                                                <span class="badge badge-light border mt-1">{{ $schedule->assignment?->kelas?->name ?? '-' }}</span>
+                                            </div>
+                                        @empty
+                                            <div class="text-muted small text-center py-2">Tidak ada jadwal</div>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
             </div>
         </div>
     </div>

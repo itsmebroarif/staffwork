@@ -56,7 +56,7 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <form action="{{ route('kelas.destroy', $k) }}" method="POST" class="d-inline"
-                                            onsubmit="return confirm('Hapus kelas {{ $k->name }}? Siswa pada kelas ini akan kehilangan kelas.')">
+                                            data-confirm='Hapus kelas {{ $k->name }}? Siswa pada kelas ini akan kehilangan kelas.'>
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-outline-danger" title="Hapus Kelas">

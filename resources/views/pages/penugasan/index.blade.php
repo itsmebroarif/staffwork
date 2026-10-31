@@ -21,6 +21,39 @@
 
     @include('pages.master._import-alerts')
 
+    <div class="card shadow mb-4">
+        <div class="card-body py-3">
+            <form action="{{ route('penugasan.index') }}" method="GET" class="form-row align-items-end">
+                <div class="form-group col-lg-5 col-md-6 mb-2 mb-md-0">
+                    <label for="q" class="small font-weight-bold text-gray-700 mb-1">Cari Guru</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="q" id="q" class="form-control bg-light"
+                            placeholder="Nama guru..." value="{{ request('q') }}">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="submit"><i class="fas fa-search fa-sm"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group col-lg-4 col-md-6 mb-2 mb-md-0">
+                    <label for="kelas" class="small font-weight-bold text-gray-700 mb-1">Kelas</label>
+                    <select name="kelas" id="kelas" class="form-control form-control-sm bg-light">
+                        <option value="">Semua Kelas</option>
+                        @foreach ($kelasList as $kelas)
+                            <option value="{{ $kelas->id }}" {{ (string) request('kelas') === (string) $kelas->id ? 'selected' : '' }}>
+                                {{ $kelas->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group col-lg-3 col-md-6 mb-0">
+                    <button type="submit" class="btn btn-primary btn-sm btn-block">
+                        <i class="fas fa-filter fa-sm mr-1"></i> Terapkan Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Data Table Card -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex align-items-center justify-content-between">
@@ -44,21 +77,30 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($assignments as $index => $assignment)
+                        @php
+                            $groupedAssignments = $assignments->getCollection();
+                            $groupCounts = $groupedAssignments->countBy(fn ($item) => $item->teacher_id.'-'.$item->mapel_id);
+                            $renderedGroups = [];
+                        @endphp
+                        @forelse ($groupedAssignments as $index => $assignment)
+                            @php $groupKey = $assignment->teacher_id.'-'.$assignment->mapel_id; @endphp
                             <tr>
                                 <td class="text-center align-middle font-weight-bold text-muted">
                                     {{ $assignments->firstItem() + $index }}
                                 </td>
-                                <td class="align-middle font-weight-bold text-gray-900">
-                                    {{ $assignment->teacher?->name ?? '-' }}
-                                    @if ($assignment->teacher?->nip)
-                                        <span class="badge badge-secondary ml-1">{{ $assignment->teacher->nip }}</span>
-                                    @endif
-                                </td>
-                                <td class="align-middle">
-                                    {{ $assignment->mapel?->name ?? '-' }}
-                                    <span class="badge badge-light border ml-1">{{ $assignment->mapel?->code }}</span>
-                                </td>
+                                @if (! isset($renderedGroups[$groupKey]))
+                                    @php $renderedGroups[$groupKey] = true; @endphp
+                                    <td class="align-middle font-weight-bold text-gray-900" rowspan="{{ $groupCounts[$groupKey] }}">
+                                        {{ $assignment->teacher?->name ?? '-' }}
+                                        @if ($assignment->teacher?->nip)
+                                            <div><span class="badge badge-secondary mt-1">{{ $assignment->teacher->nip }}</span></div>
+                                        @endif
+                                    </td>
+                                    <td class="align-middle" rowspan="{{ $groupCounts[$groupKey] }}">
+                                        {{ $assignment->mapel?->name ?? '-' }}
+                                        <div><span class="badge badge-light border mt-1">{{ $assignment->mapel?->code }}</span></div>
+                                    </td>
+                                @endif
                                 <td class="align-middle">
                                     <span class="badge badge-info px-2 py-1">{{ $assignment->kelas?->name ?? '-' }}</span>
                                 </td>
@@ -69,7 +111,7 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <form action="{{ route('penugasan.destroy', $assignment) }}" method="POST" class="d-inline"
-                                                onsubmit="return confirm('Hapus penugasan ini? Jadwal terkait ikut terhapus.')">
+                                                data-confirm='Hapus penugasan ini? Jadwal terkait ikut terhapus.'>
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-outline-danger" title="Hapus Penugasan">

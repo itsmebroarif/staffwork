@@ -24,6 +24,12 @@
 
     <!-- Custom styles for this template-->
     <link href="{{ asset('template/css/sb-admin-2.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('template/css/app-ui.css') }}" rel="stylesheet">
+
+    <!-- Animasi saat konten muncul (AOS.js) -->
+    {{-- <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet"> --}}
+
+    <meta name="theme-color" content="#4e73df">
 
     <!-- Independent scroll layout: sidebar scroll sendiri, navbar + konten scroll bersama -->
     <style>
@@ -202,6 +208,9 @@
     </div>
     <!-- End of Page Wrapper -->
 
+    <!-- Navigasi bawah (mobile) -->
+    @include('components.mobile-nav')
+
     <!-- Scroll to Top Button-->
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
@@ -230,6 +239,10 @@
         </div>
     </div>
 
+    <!-- SweetAlert2 & AOS (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {{-- <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script> --}}
+
     <!-- Bootstrap core JavaScript-->
     <script src="{{ asset('template/vendor/jquery/jquery.min.js') }}"></script>
     <script src="{{ asset('template/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
@@ -239,6 +252,113 @@
 
     <!-- Custom scripts for all pages-->
     <script src="{{ asset('template/js/sb-admin-2.min.js') }}"></script>
+    <script>
+        // Konfirmasi aksi memakai SweetAlert2 (fallback ke confirm bawaan bila CDN gagal).
+        function askConfirm(message, onConfirm) {
+            if (typeof Swal === 'undefined') {
+                if (window.confirm(message)) {
+                    onConfirm();
+                }
+
+                return;
+            }
+
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, lanjutkan',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                reverseButtons: true
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    onConfirm();
+                }
+            });
+        }
+
+        document.addEventListener('submit', function (event) {
+            var form = event.target;
+            var message = form.getAttribute('data-confirm');
+
+            if (!message || form.dataset.confirmed === '1') {
+                return;
+            }
+
+            event.preventDefault();
+
+            askConfirm(message, function () {
+                form.dataset.confirmed = '1';
+                form.submit();
+            });
+        });
+
+        // Tombol submit yang membawa data-confirm sendiri (mis. hapus permanen).
+        document.addEventListener('click', function (event) {
+            var trigger = event.target.closest('[data-confirm]');
+
+            if (!trigger || trigger.tagName === 'FORM') {
+                return;
+            }
+
+            var form = trigger.closest('form');
+
+            if (!form || form.dataset.confirmed === '1') {
+                return;
+            }
+
+            event.preventDefault();
+
+            askConfirm(trigger.getAttribute('data-confirm'), function () {
+                form.dataset.confirmed = '1';
+                form.submit();
+            });
+        });
+
+        // AOS: area scroll utama berada di #content, jadi posisi animasi perlu disegarkan.
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof AOS === 'undefined') {
+                return;
+            }
+
+            AOS.init({
+                duration: 600,
+                easing: 'ease-out-cubic',
+                once: true,
+                offset: 60,
+                disable: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            });
+
+            var contentArea = document.getElementById('content');
+
+            if (contentArea) {
+                var refreshTimer;
+
+                contentArea.addEventListener('scroll', function () {
+                    clearTimeout(refreshTimer);
+                    refreshTimer = setTimeout(function () {
+                        AOS.refresh();
+                    }, 150);
+                });
+            }
+        });
+
+        // Area scroll utama ada di #content, jadi tombol "ke atas" diarahkan ke sana.
+        $(document).on('click', '.scroll-to-top', function (event) {
+            event.preventDefault();
+
+            var content = document.getElementById('content');
+
+            if (content) {
+                content.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
     @stack('scripts')
 </body>
 

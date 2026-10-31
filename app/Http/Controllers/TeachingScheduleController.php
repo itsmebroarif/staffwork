@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\TeachingAssignment;
 use App\Models\TeachingSchedule;
 use Illuminate\Contracts\View\View;
@@ -19,13 +20,13 @@ class TeachingScheduleController extends Controller
      */
     public function index(): View
     {
-        $schedules = TeachingSchedule::with('assignment.teacher', 'assignment.mapel', 'assignment.kelas')
+        $query = TeachingSchedule::with('assignment.teacher', 'assignment.mapel', 'assignment.kelas')
             ->orderByRaw("FIELD(day, 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu')")
-            ->orderBy('start_time')
-            ->paginate(15);
+            ->orderBy('start_time');
 
         return view('pages.jadwal.index', [
-            'schedules' => $schedules,
+            'schedules' => (clone $query)->paginate(15),
+            'calendarSchedules' => $query->get(),
         ]);
     }
 
@@ -46,7 +47,9 @@ class TeachingScheduleController extends Controller
     {
         $validated = $this->validated($request);
 
-        TeachingSchedule::create($validated);
+        $schedule = TeachingSchedule::create($validated);
+
+        ActivityLog::record('schedule.created', "Jadwal {$schedule->day_name} pukul {$schedule->start_time} ditambahkan", $schedule);
 
         return redirect()->route('jadwal.index')->with('success', 'Jadwal pengajaran berhasil ditambahkan!');
     }
@@ -71,6 +74,8 @@ class TeachingScheduleController extends Controller
 
         $jadwal->update($validated);
 
+        ActivityLog::record('schedule.updated', "Jadwal {$jadwal->day_name} pukul {$jadwal->start_time} diperbarui", $jadwal);
+
         return redirect()->route('jadwal.index')->with('success', 'Jadwal pengajaran berhasil diperbarui!');
     }
 
@@ -79,6 +84,8 @@ class TeachingScheduleController extends Controller
      */
     public function destroy(TeachingSchedule $jadwal): RedirectResponse
     {
+        ActivityLog::record('schedule.deleted', "Jadwal {$jadwal->day_name} pukul {$jadwal->start_time} dihapus", null);
+
         $jadwal->delete();
 
         return redirect()->route('jadwal.index')->with('success', 'Jadwal pengajaran berhasil dihapus.');

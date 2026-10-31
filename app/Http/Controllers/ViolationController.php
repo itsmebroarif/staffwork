@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
 use App\Models\Violation;
 use App\Notifications\StudentCalledNotification;
@@ -60,6 +61,8 @@ class ViolationController extends Controller
         ]);
 
         $student->notify(new StudentCalledNotification($violation));
+
+        ActivityLog::record('violation.created', "Pelanggaran siswa '{$student->name}' dicatat ({$violation->room_name})", $violation);
 
         $roomName = $violation->room_name;
 

@@ -79,7 +79,7 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <form action="{{ route('siswa.destroy', $siswa) }}" method="POST" class="d-inline"
-                                            onsubmit="return confirm('Hapus akun siswa {{ $siswa->name }}?')">
+                                            data-confirm='Hapus akun siswa {{ $siswa->name }}?'>
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-outline-danger" title="Hapus Siswa">

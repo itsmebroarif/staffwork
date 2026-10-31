@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
 use App\Models\WaliMurid;
 use Illuminate\Contracts\View\View;
@@ -44,7 +45,9 @@ class GuardianController extends Controller
             return back()->withErrors(['student_id' => 'Pengguna yang dipilih bukan murid.'])->withInput();
         }
 
-        WaliMurid::create($validated);
+        $guardian = WaliMurid::create($validated);
+
+        ActivityLog::record('guardian.created', "Wali murid '{$guardian->name}' untuk siswa '{$student->name}' ditambahkan", $guardian);
 
         return redirect()->route('wali.index')->with('success', "Wali murid '{$validated['name']}' berhasil ditambahkan!");
     }
@@ -74,6 +77,8 @@ class GuardianController extends Controller
 
         $wali->update($validated);
 
+        ActivityLog::record('guardian.updated', "Wali murid '{$wali->name}' diperbarui", $wali);
+
         return redirect()->route('wali.index')->with('success', "Wali murid '{$wali->name}' berhasil diperbarui!");
     }
 
@@ -82,6 +87,8 @@ class GuardianController extends Controller
      */
     public function destroy(WaliMurid $wali): RedirectResponse
     {
+        ActivityLog::record('guardian.deleted', "Wali murid '{$wali->name}' dihapus", null);
+
         $wali->delete();
 
         return redirect()->route('wali.index')->with('success', 'Wali murid berhasil dihapus.');

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Kelas;
+use App\Models\Mapel;
 use App\Models\Material;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -18,13 +20,16 @@ class MateriController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Material::with(['author', 'kelas'])->latest();
+        $query = Material::with(['author', 'kelas', 'mapel'])
+            ->leftJoin('users', 'users.id', '=', 'materials.user_id')
+            ->leftJoin('mapels', 'mapels.id', '=', 'materials.mapel_id')
+            ->select('materials.*');
 
         $user = $request->user();
         if ($user->isStudent()) {
-            $query->where('is_published', true)
+            $query->where('materials.is_published', true)
                 ->where(function ($q) use ($user) {
-                    $q->whereNull('kelas_id');
+                    $q->whereNull('materials.kelas_id');
 
                     if ($user->kelas_id !== null && $user->kelas !== null) {
                         $q->orWhereHas('kelas', fn ($k) => $k->where('tingkat', $user->kelas->tingkat));
@@ -34,15 +39,28 @@ class MateriController extends Controller
 
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
-                $q->where('title', 'like', '%'.$request->string('q').'%')
-                    ->orWhere('body', 'like', '%'.$request->string('q').'%');
+                $q->where('materials.title', 'like', '%'.$request->string('q').'%')
+                    ->orWhere('materials.body', 'like', '%'.$request->string('q').'%');
             });
         }
+
+        if ($request->filled('mapel')) {
+            $query->where('materials.mapel_id', $request->integer('mapel'));
+        }
+
+        match ($request->string('sort')->toString()) {
+            'teacher' => $query->orderBy('users.name'),
+            'mapel' => $query->orderBy('mapels.name'),
+            'title' => $query->orderBy('materials.title'),
+            'oldest' => $query->orderBy('materials.created_at'),
+            default => $query->orderByDesc('materials.created_at'),
+        };
 
         $materials = $query->paginate(9)->withQueryString();
 
         return view('pages.materis.index', [
             'materials' => $materials,
+            'mapels' => Mapel::orderBy('name')->get(),
         ]);
     }
 
@@ -53,6 +71,7 @@ class MateriController extends Controller
     {
         return view('pages.materis.create', [
             'kelasList' => Kelas::orderBy('tingkat')->orderBy('name')->get(),
+            'mapels' => Mapel::orderBy('name')->get(),
         ]);
     }
 
@@ -65,17 +84,20 @@ class MateriController extends Controller
 
         [$filePath, $fileName] = $this->storedAttachment($request);
 
-        Material::create([
+        $material = Material::create([
             'user_id' => $request->user()->id,
             'title' => $validated['title'],
             'slug' => $this->uniqueSlug($validated['title']),
             'type' => $validated['type'],
             'kelas_id' => $validated['kelas_id'] ?? null,
+            'mapel_id' => $validated['mapel_id'] ?? null,
             'body' => $validated['body'] ?? null,
             'file_path' => $filePath,
             'file_name' => $fileName,
             'is_published' => $request->boolean('is_published', true),
         ]);
+
+        ActivityLog::record('material.created', "Materi '{$material->title}' ditambahkan", $material);
 
         return redirect()->route('materis.index')->with('success', 'Materi berhasil dipublikasikan!');
     }
@@ -125,6 +147,8 @@ class MateriController extends Controller
     {
         $materi->restore();
 
+        ActivityLog::record('material.restored', "Materi '{$materi->title}' dipulihkan dari History Bin", $materi);
+
         return redirect()->route('materis.bin')->with('success', 'Materi berhasil dipulihkan dan kembali tampil di daftar materi.');
     }
 
@@ -133,6 +157,7 @@ class MateriController extends Controller
      */
     public function forceDelete(Material $materi): RedirectResponse
     {
+        ActivityLog::record('material.force_deleted', "Materi '{$materi->title}' dihapus permanen", null);
         foreach ($materi->embeddedImagePaths() as $path) {
             if (Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
@@ -172,6 +197,7 @@ class MateriController extends Controller
         return view('pages.materis.edit', [
             'material' => $materi,
             'kelasList' => Kelas::orderBy('tingkat')->orderBy('name')->get(),
+            'mapels' => Mapel::orderBy('name')->get(),
         ]);
     }
 
@@ -203,11 +229,14 @@ class MateriController extends Controller
             'slug' => $slug,
             'type' => $validated['type'],
             'kelas_id' => $validated['kelas_id'] ?? null,
+            'mapel_id' => $validated['mapel_id'] ?? null,
             'body' => $validated['body'] ?? null,
             'file_path' => $filePath,
             'file_name' => $fileName,
             'is_published' => $request->boolean('is_published', $materi->is_published),
         ]);
+
+        ActivityLog::record('material.updated', "Materi '{$materi->title}' diperbarui", $materi);
 
         return redirect()->route('materis.index')->with('success', 'Materi berhasil diperbarui!');
     }
@@ -217,6 +246,8 @@ class MateriController extends Controller
      */
     public function destroy(Material $materi): RedirectResponse
     {
+        ActivityLog::record('material.deleted', "Materi '{$materi->title}' dipindahkan ke History Bin", $materi);
+
         $materi->delete();
 
         return redirect()->route('materis.index')->with('success', 'Materi dipindahkan ke History Bin. Anda bisa memulihkannya kembali.');
@@ -262,6 +293,7 @@ class MateriController extends Controller
             'gambar' => ['nullable', 'file', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
             'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt', 'max:10240'],
             'kelas_id' => ['nullable', 'exists:kelas,id'],
+            'mapel_id' => ['nullable', 'exists:mapels,id'],
             'is_published' => ['nullable', 'boolean'],
         ];
 

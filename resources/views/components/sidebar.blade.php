@@ -5,7 +5,7 @@
         <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-graduation-cap"></i>
         </div>
-        <div class="sidebar-brand-text mx-4">MySchool</div>
+        <div class="sidebar-brand-text mx-2">MySchool</div>
     </a>
 
     <!-- Divider -->
@@ -34,16 +34,6 @@
             <span>Materi</span>
         </a>
     </li>
-
-    @if (Auth::user()->isTeacher())
-        <!-- Nav Item - History Bin Materi -->
-        <li class="nav-item {{ request()->routeIs('materis.bin') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('materis.bin') }}">
-                <i class="fas fa-fw fa-trash-restore"></i>
-                <span>History Bin</span>
-            </a>
-        </li>
-    @endif
 
     <!-- Nav Item - Tugas & Ujian -->
     <li class="nav-item {{ request()->routeIs('exams.*') ? 'active' : '' }}">
@@ -112,6 +102,14 @@
             </div>
         </li>
 
+        <!-- Nav Item - Activity Log -->
+        <li class="nav-item {{ request()->routeIs('activity.*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('activity.index') }}">
+                <i class="fas fa-fw fa-history"></i>
+                <span>Activity Log</span>
+            </a>
+        </li>
+
         <!-- Nav Item - Master Data -->
         <li
             class="nav-item {{ request()->routeIs('siswa.*') || request()->routeIs('guru.*') || request()->routeIs('kelas.*') || request()->routeIs('mapel.*') || request()->routeIs('wali.*') ? 'active' : '' }}">
@@ -173,6 +171,14 @@
         <a class="nav-link" href="{{ route('profile.edit') }}">
             <i class="fas fa-fw fa-user-circle"></i>
             <span>Profil & Password</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Report Bug / Request Fitur -->
+    <li class="nav-item {{ request()->routeIs('report.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('report.index') }}">
+            <i class="fas fa-fw fa-bug"></i>
+            <span>Laporkan Bug / Request</span>
         </a>
     </li>
 

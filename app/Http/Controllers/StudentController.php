@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Kelas;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
@@ -61,11 +62,14 @@ class StudentController extends Controller
             'kelas_id.required' => 'Kelas wajib dipilih.',
         ]);
 
-        User::create([
+        $createdStudent = User::create([
             ...$validated,
             'role' => 'murid',
             'password' => Hash::make($validated['password']),
+            'password_plain' => $validated['password'],
         ]);
+
+        ActivityLog::record('user.created', "Akun murid '{$createdStudent->name}' didaftarkan", $createdStudent);
 
         return redirect()->route('siswa.index')->with('success', "Akun murid '{$validated['name']}' berhasil didaftarkan!");
     }
@@ -106,9 +110,12 @@ class StudentController extends Controller
 
         if (! empty($validated['password'])) {
             $siswa->password = Hash::make($validated['password']);
+            $siswa->password_plain = $validated['password'];
         }
 
         $siswa->save();
+
+        ActivityLog::record('user.updated', "Akun murid '{$siswa->name}' diperbarui", $siswa);
 
         return redirect()->route('siswa.index')->with('success', "Data murid '{$siswa->name}' berhasil diperbarui!");
     }
@@ -121,6 +128,8 @@ class StudentController extends Controller
         if ($request->user()->id === $siswa->id) {
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri saat sedang login!');
         }
+
+        ActivityLog::record('user.deleted', "Akun murid '{$siswa->name}' dihapus", null);
 
         $siswa->delete();
 
