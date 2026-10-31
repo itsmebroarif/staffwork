@@ -17,6 +17,117 @@
 
     <!-- Custom styles for this template-->
     <link href="{{ asset('template/css/sb-admin-2.min.css') }}" rel="stylesheet">
+
+    <!-- Independent scroll layout: sidebar scroll sendiri, navbar + konten scroll bersama -->
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            overflow: hidden;
+        }
+
+        #wrapper {
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            height: 100vh;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        /* Mode ikon (sidebar ditutup): flyout menu absolute harus tetap terlihat */
+        .sidebar.toggled {
+            overflow: visible;
+        }
+
+        #content-wrapper {
+            height: 100vh;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar dan konten berada di satu area scroll; footer tetap menempel di bawah */
+        #content {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar tipis & rapi */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .25);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, .4);
+        }
+
+        #content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #content::-webkit-scrollbar-track {
+            background: #f1f2f6;
+        }
+
+        #content::-webkit-scrollbar-thumb {
+            background: #c3c6d1;
+            border-radius: 4px;
+        }
+
+        #content::-webkit-scrollbar-thumb:hover {
+            background: #a9adb9;
+        }
+
+        /* Layar kecil: kembali ke perilaku scroll halaman normal */
+        @media (max-width: 768px) {
+            html,
+            body {
+                height: auto;
+            }
+
+            body {
+                overflow: visible;
+                overflow-x: hidden;
+            }
+
+            #wrapper {
+                height: auto;
+                overflow: visible;
+            }
+
+            .sidebar {
+                height: auto;
+                min-height: 100vh;
+                overflow: visible;
+            }
+
+            #content-wrapper {
+                height: auto;
+                display: block;
+            }
+
+            #content {
+                overflow: visible;
+            }
+        }
+    </style>
     @stack('styles')
 </head>
 
