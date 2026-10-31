@@ -5,8 +5,8 @@
         <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-graduation-cap"></i>
         </div>
-        <div class="sidebar-brand-text mx-3">StaffWork</div>
-    </a>
+        <div class="sidebar-brand-text mx-3">MySchool</div>
+    </a> 
 
     <!-- Divider -->
     <hr class="sidebar-divider my-0">
