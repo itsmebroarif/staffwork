@@ -13,6 +13,11 @@
                 @if (! $material->is_published)
                     <span class="badge badge-secondary ml-1">Draft</span>
                 @endif
+                @if ($material->type === 'gambar')
+                    <span class="badge badge-warning ml-1">
+                        <i class="fas fa-image mr-1"></i> Gambar
+                    </span>
+                @endif
                 @if ($material->kelas)
                     <span class="badge badge-warning ml-1">
                         <i class="fas fa-door-open mr-1"></i> {{ $material->kelas->name }}
@@ -27,6 +32,14 @@
                 <a href="{{ route('materis.edit', $material) }}" class="btn btn-sm btn-outline-primary shadow-sm mr-1">
                     <i class="fas fa-edit fa-sm mr-1"></i> Edit
                 </a>
+                <form action="{{ route('materis.destroy', $material) }}" method="POST" class="d-inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm mr-1"
+                        onclick="return confirm('Pindahkan materi ini ke History Bin? Materi masih bisa dipulihkan dari menu History Bin.');">
+                        <i class="fas fa-trash-alt fa-sm mr-1"></i> Hapus
+                    </button>
+                </form>
             @endif
             <a href="{{ route('materis.index') }}" class="btn btn-sm btn-secondary shadow-sm">
                 <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Kembali
@@ -39,12 +52,28 @@
             <div class="card shadow mb-4">
                 <div class="card-body">
                     @if ($material->body)
-                        <article class="text-gray-800" style="line-height: 1.75;">
-                            {!! nl2br(e($material->body)) !!}
-                        </article>
+                        <div class="materi-body text-gray-800" style="line-height: 1.75;">
+                            {!! $material->rendered_body !!}
+                        </div>
                     @endif
 
-                    @if ($material->file_path && $material->file_name)
+                    @if ($material->type === 'gambar' && $material->file_path)
+                        @if ($material->body)
+                            <hr>
+                        @endif
+                        <div class="text-center">
+                            <img src="{{ asset('storage/'.$material->file_path) }}"
+                                alt="{{ $material->title }}"
+                                class="img-fluid rounded shadow-sm border p-1" style="max-height: 520px;">
+                            <div class="mt-2">
+                                <a href="{{ asset('storage/'.$material->file_path) }}" class="btn btn-outline-primary btn-sm" download>
+                                    <i class="fas fa-download mr-1"></i> Unduh Gambar: {{ $material->file_name ?? 'gambar-materi' }}
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($material->type === 'file' && $material->file_path && $material->file_name)
                         @if ($material->body)
                             <hr>
                         @endif

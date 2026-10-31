@@ -159,6 +159,8 @@
 
                 <!-- Begin Page Content -->
                 <div class="container-fluid">
+                    @include('components.simulation-banner')
+
                     @if (session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}

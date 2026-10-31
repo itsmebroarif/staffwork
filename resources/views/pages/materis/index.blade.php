@@ -10,9 +10,14 @@
             <p class="text-muted small mb-0">Blog materi ajar — dapat diunggah oleh Super Admin & Guru</p>
         </div>
         @if (Auth::user()->isTeacher())
-            <a href="{{ route('materis.create') }}" class="btn btn-sm btn-primary shadow-sm font-weight-bold">
-                <i class="fas fa-plus fa-sm text-white-50 mr-1"></i> Upload Materi Baru
-            </a>
+            <div>
+                <a href="{{ route('materis.bin') }}" class="btn btn-sm btn-outline-secondary shadow-sm mr-1">
+                    <i class="fas fa-trash-restore fa-sm mr-1"></i> History Bin
+                </a>
+                <a href="{{ route('materis.create') }}" class="btn btn-sm btn-primary shadow-sm font-weight-bold">
+                    <i class="fas fa-plus fa-sm text-white-50 mr-1"></i> Upload Materi Baru
+                </a>
+            </div>
         @endif
     </div>
 
@@ -48,6 +53,9 @@
                                 @if (! $material->is_published)
                                     <span class="badge badge-secondary">Draft</span>
                                 @endif
+                                @if ($material->type === 'gambar')
+                                    <span class="badge badge-warning">Gambar</span>
+                                @endif
                                 @if ($material->type === 'file')
                                     <span class="badge badge-info">File</span>
                                 @endif
@@ -71,9 +79,22 @@
                                 <i class="fas fa-paperclip mr-1"></i>{{ $material->file_name }}
                             </span>
                         @endif
-                        <a href="{{ route('materis.show', $material) }}" class="btn btn-sm btn-outline-primary mt-auto">
-                            Baca Selengkapnya <i class="fas fa-arrow-right fa-sm ml-1"></i>
-                        </a>
+                        <div class="d-flex mt-auto">
+                            <a href="{{ route('materis.show', $material) }}" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                Baca Selengkapnya <i class="fas fa-arrow-right fa-sm ml-1"></i>
+                            </a>
+                            @if (Auth::user()->isTeacher())
+                                <form action="{{ route('materis.destroy', $material) }}" method="POST" class="ml-2">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        title="Hapus materi (bisa dipulihkan dari History Bin)"
+                                        onclick="return confirm('Pindahkan materi ini ke History Bin? Materi masih bisa dipulihkan di menu History Bin.');">
+                                        <i class="fas fa-trash-alt fa-sm"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>

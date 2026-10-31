@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Kelas;
 use App\Models\Material;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -62,12 +63,7 @@ class MateriController extends Controller
     {
         $validated = $this->validated($request);
 
-        $filePath = null;
-        $fileName = null;
-        if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store('materials', 'public');
-            $fileName = $request->file('file')->getClientOriginalName();
-        }
+        [$filePath, $fileName] = $this->storedAttachment($request);
 
         Material::create([
             'user_id' => $request->user()->id,
@@ -82,6 +78,74 @@ class MateriController extends Controller
         ]);
 
         return redirect()->route('materis.index')->with('success', 'Materi berhasil dipublikasikan!');
+    }
+
+    /**
+     * Handle image uploads coming from the CKEditor WYSIWYG editor.
+     */
+    public function uploadImage(Request $request): JsonResponse
+    {
+        $request->validate([
+            'upload' => ['required', 'file', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
+        ], [
+            'upload.required' => 'Pilih gambar yang akan diunggah.',
+            'upload.file' => 'File harus berupa gambar.',
+            'upload.image' => 'File harus berupa gambar.',
+            'upload.mimes' => 'Format gambar yang diperbolehkan: jpeg, png, jpg, gif, webp.',
+            'upload.max' => 'Ukuran gambar maksimal 5MB.',
+        ]);
+
+        $path = $request->file('upload')->store('materials/images', 'public');
+
+        return response()->json([
+            'url' => Storage::disk('public')->url($path),
+        ]);
+    }
+
+    /**
+     * List soft-deleted materials (History Bin).
+     */
+    public function bin(Request $request): View
+    {
+        $query = Material::onlyTrashed()->with(['author', 'kelas'])->latest('deleted_at');
+
+        if ($request->filled('q')) {
+            $query->where('title', 'like', '%'.$request->string('q').'%');
+        }
+
+        return view('pages.materis.bin', [
+            'materials' => $query->paginate(10)->withQueryString(),
+        ]);
+    }
+
+    /**
+     * Restore a soft-deleted material.
+     */
+    public function restore(Material $materi): RedirectResponse
+    {
+        $materi->restore();
+
+        return redirect()->route('materis.bin')->with('success', 'Materi berhasil dipulihkan dan kembali tampil di daftar materi.');
+    }
+
+    /**
+     * Permanently delete a soft-deleted material and its files.
+     */
+    public function forceDelete(Material $materi): RedirectResponse
+    {
+        foreach ($materi->embeddedImagePaths() as $path) {
+            if (Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+        }
+
+        if ($materi->file_path && Storage::disk('public')->exists($materi->file_path)) {
+            Storage::disk('public')->delete($materi->file_path);
+        }
+
+        $materi->forceDelete();
+
+        return redirect()->route('materis.bin')->with('success', 'Materi dihapus permanen beserta file pendukungnya.');
     }
 
     /**
@@ -120,16 +184,17 @@ class MateriController extends Controller
 
         $filePath = $materi->file_path;
         $fileName = $materi->file_name;
-        if ($request->hasFile('file')) {
+
+        if ($request->hasFile('gambar') || $request->hasFile('file')) {
             if ($materi->file_path && Storage::disk('public')->exists($materi->file_path)) {
                 Storage::disk('public')->delete($materi->file_path);
             }
-            $filePath = $request->file('file')->store('materials', 'public');
-            $fileName = $request->file('file')->getClientOriginalName();
+
+            [$filePath, $fileName] = $this->storedAttachment($request);
         }
 
         $slug = Str::slug($validated['title']);
-        if (Material::where('slug', $slug)->where('id', '!=', $materi->id)->exists()) {
+        if (Material::withTrashed()->where('slug', $slug)->where('id', '!=', $materi->id)->exists()) {
             $slug = $materi->slug;
         }
 
@@ -148,21 +213,41 @@ class MateriController extends Controller
     }
 
     /**
-     * Remove the specified material from storage.
+     * Soft delete the specified material (moves it to the History Bin).
      */
     public function destroy(Material $materi): RedirectResponse
     {
-        if ($materi->file_path && Storage::disk('public')->exists($materi->file_path)) {
-            Storage::disk('public')->delete($materi->file_path);
-        }
-
         $materi->delete();
 
-        return redirect()->route('materis.index')->with('success', 'Materi berhasil dihapus.');
+        return redirect()->route('materis.index')->with('success', 'Materi dipindahkan ke History Bin. Anda bisa memulihkannya kembali.');
     }
 
     /**
-     * Validate material payload for both tab modes (artikel or file upload).
+     * Persist the uploaded attachment (image or document) to the public disk.
+     *
+     * @return array{0: ?string, 1: ?string}
+     */
+    private function storedAttachment(Request $request): array
+    {
+        if ($request->hasFile('gambar')) {
+            return [
+                $request->file('gambar')->store('materials', 'public'),
+                $request->file('gambar')->getClientOriginalName(),
+            ];
+        }
+
+        if ($request->hasFile('file')) {
+            return [
+                $request->file('file')->store('materials', 'public'),
+                $request->file('file')->getClientOriginalName(),
+            ];
+        }
+
+        return [null, null];
+    }
+
+    /**
+     * Validate material payload for all tab modes (artikel, gambar or file upload).
      *
      * @return array<string, mixed>
      */
@@ -172,20 +257,26 @@ class MateriController extends Controller
 
         $rules = [
             'title' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'string', 'in:artikel,file'],
-            'body' => ['required_if:type,artikel', 'nullable', 'string'],
+            'type' => ['required', 'string', 'in:artikel,gambar,file'],
+            'body' => ['required_if:type,artikel', 'nullable', 'string', 'max:200000'],
+            'gambar' => ['nullable', 'file', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
             'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt', 'max:10240'],
             'kelas_id' => ['nullable', 'exists:kelas,id'],
             'is_published' => ['nullable', 'boolean'],
         ];
 
-        // A file-type material may keep its existing file when editing.
+        // A gambar/file material may keep its existing attachment when editing.
         if ($material === null || $material->file_path === null) {
+            $rules['gambar'][] = 'required_if:type,gambar';
             $rules['file'][] = 'required_if:type,file';
         }
 
         return $request->validate($rules, [
             'body.required_if' => 'Tulis isi materi pada tab artikel.',
+            'gambar.required_if' => 'Unggah gambar pada tab input gambar.',
+            'gambar.image' => 'File harus berupa gambar.',
+            'gambar.mimes' => 'Format gambar yang diperbolehkan: jpeg, png, jpg, gif, webp.',
+            'gambar.max' => 'Ukuran gambar maksimal 5MB.',
             'file.required_if' => 'Upload file PDF/PPT pada tab upload file.',
             'file.mimes' => 'Format file tidak didukung.',
             'file.max' => 'Ukuran file maksimal 10MB.',
@@ -196,7 +287,7 @@ class MateriController extends Controller
     {
         $slug = Str::slug($title);
 
-        if (Material::where('slug', $slug)->exists()) {
+        if (Material::withTrashed()->where('slug', $slug)->exists()) {
             $slug .= '-'.Str::random(5);
         }
 

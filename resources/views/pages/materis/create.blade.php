@@ -6,7 +6,7 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <div>
             <h1 class="h3 mb-1 text-gray-800">Upload Materi Baru</h1>
-            <p class="text-muted small mb-0">Tulis artikel langsung atau upload file PDF/PPT, lalu pilih kelas target</p>
+            <p class="text-muted small mb-0">Tulis artikel (WYSIWYG + gambar + blok kode), input gambar, atau upload file PDF/PPT, lalu pilih kelas target</p>
         </div>
         <a href="{{ route('materis.index') }}" class="btn btn-sm btn-secondary shadow-sm">
             <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Kembali ke Daftar Materi

@@ -28,6 +28,10 @@ class ProfileController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        if ($request->user()->isSimulating()) {
+            return back()->with('error', 'Mode simulasi aktif — perubahan data tidak disimpan. Keluar dari simulasi terlebih dahulu.');
+        }
+
         $user = $request->user();
 
         $validated = $request->validate([
@@ -62,6 +66,10 @@ class ProfileController extends Controller
      */
     public function updatePassword(Request $request): RedirectResponse
     {
+        if ($request->user()->isSimulating()) {
+            return back()->with('error', 'Mode simulasi aktif — kata sandi tidak diubah. Keluar dari simulasi terlebih dahulu.');
+        }
+
         $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'string', Password::min(6), 'confirmed'],
@@ -83,6 +91,10 @@ class ProfileController extends Controller
      */
     public function removeAvatar(Request $request): RedirectResponse
     {
+        if ($request->user()->isSimulating()) {
+            return back()->with('error', 'Mode simulasi aktif — foto profil tidak dihapus. Keluar dari simulasi terlebih dahulu.');
+        }
+
         $user = $request->user();
 
         if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
@@ -93,5 +105,47 @@ class ProfileController extends Controller
         $user->save();
 
         return back()->with('success', 'Foto profil berhasil dihapus dan dikembalikan ke bawaan.');
+    }
+
+    /**
+     * Start a read-only role simulation (Super Admin only).
+     *
+     * The Super Admin can preview how the application looks and behaves
+     * as a Guru or Murid without creating another account.
+     */
+    public function startSimulation(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! $user->reallyIsSuperAdmin()) {
+            abort(403, 'Akses terbatas. Fitur simulasi hanya tersedia untuk Super Admin.');
+        }
+
+        $validated = $request->validate([
+            'simulate_role' => ['required', 'string', 'in:guru,murid'],
+        ], [
+            'simulate_role.in' => 'Peran simulasi tidak valid.',
+        ]);
+
+        session(['simulated_role' => $validated['simulate_role']]);
+
+        return redirect()->route('profile.edit')->with(
+            'success',
+            'Mode simulasi sebagai '.($validated['simulate_role'] === 'guru' ? 'Guru' : 'Murid').' aktif. Halaman kini menampilkan tampilan peran tersebut (read-only).'
+        );
+    }
+
+    /**
+     * Stop the active role simulation and restore the Super Admin view.
+     */
+    public function stopSimulation(Request $request): RedirectResponse
+    {
+        if (! $request->user()->reallyIsSuperAdmin()) {
+            abort(403, 'Akses terbatas. Fitur simulasi hanya tersedia untuk Super Admin.');
+        }
+
+        session()->forget('simulated_role');
+
+        return redirect()->route('profile.edit')->with('success', 'Mode simulasi dihentikan. Anda kembali melihat tampilan Super Admin.');
     }
 }

@@ -241,7 +241,7 @@ test('guru can update exam questions', function () {
     expect($exam->questions->first()->question)->toBe('Soal baru?');
 });
 
-test('guru can delete material', function () {
+test('guru can delete material to the history bin', function () {
     Storage::fake('public');
     $guru = User::factory()->guru()->create();
     $material = Material::factory()->create(['user_id' => $guru->id]);
@@ -249,5 +249,8 @@ test('guru can delete material', function () {
     $response = $this->actingAs($guru)->delete(route('materis.destroy', $material));
 
     $response->assertRedirect(route('materis.index'));
-    $this->assertDatabaseMissing('materials', ['id' => $material->id]);
+
+    expect(Material::find($material->id))->toBeNull();
+    expect(Material::withTrashed()->find($material->id))->not->toBeNull();
+    expect(Material::onlyTrashed()->count())->toBe(1);
 });

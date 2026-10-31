@@ -69,6 +69,16 @@ Route::middleware('auth')->group(function () {
         'removeAvatar',
     ])->name('profile.avatar.destroy');
 
+    // Role simulation preview for Super Admin (read-only look & feel)
+    Route::post('/profile/simulate', [
+        ProfileController::class,
+        'startSimulation',
+    ])->name('profile.simulate.start');
+    Route::delete('/profile/simulate', [
+        ProfileController::class,
+        'stopSimulation',
+    ])->name('profile.simulate.stop');
+
     // Notifications (all authenticated users)
     Route::get('/notifications', [NotificationController::class, 'index'])->name(
         'notifications.index'
@@ -102,8 +112,12 @@ Route::middleware('auth')->group(function () {
             MateriController::class,
             'create',
         ])->name('materis.create');
+        Route::post('/materis/images/upload', [
+            MateriController::class,
+            'uploadImage',
+        ])->name('materis.images.upload');
         Route::post('/materis', [MateriController::class, 'store'])->name(
-            'materis.store'
+            'materis.store',
         );
         Route::get('/materis/{materi}/edit', [
             MateriController::class,
@@ -117,6 +131,20 @@ Route::middleware('auth')->group(function () {
             MateriController::class,
             'destroy',
         ])->name('materis.destroy');
+
+        // History Bin: soft-deleted materials (restore or permanent delete)
+        Route::get('/materis/bin', [
+            MateriController::class,
+            'bin',
+        ])->name('materis.bin');
+        Route::post('/materis/{materi}/restore', [
+            MateriController::class,
+            'restore',
+        ])->withTrashed()->name('materis.restore');
+        Route::delete('/materis/{materi}/force', [
+            MateriController::class,
+            'forceDelete',
+        ])->withTrashed()->name('materis.force');
 
         Route::get('/exams/create', [ExamController::class, 'create'])->name(
             'exams.create'

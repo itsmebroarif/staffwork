@@ -83,7 +83,10 @@ test('guru can view materi form tabs', function () {
     $create = $this->actingAs($guru)->get(route('materis.create'));
     $create->assertOk();
     $create->assertSee('Tulis Artikel');
+    $create->assertSee('Input Gambar');
     $create->assertSee('Upload PDF/PPT');
+    $create->assertSee('materi-editor', false);
+    $create->assertSee(asset('template/vendor/ckeditor/ckeditor.js'), false);
 
     $this->actingAs($guru)->get(route('materis.edit', $material))->assertOk();
 });

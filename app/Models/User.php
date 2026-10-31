@@ -53,11 +53,41 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the real (database) role, ignoring any active role simulation.
+     */
+    public function realRole(): string
+    {
+        return (string) $this->getRawOriginal('role');
+    }
+
+    /**
+     * Get the role currently simulated by a Super Admin, if any.
+     */
+    public function simulatedRole(): ?string
+    {
+        if (! $this->reallyIsSuperAdmin()) {
+            return null;
+        }
+
+        $role = session('simulated_role');
+
+        return in_array($role, ['guru', 'murid'], true) ? $role : null;
+    }
+
+    /**
+     * Get the role used for rendering and authorization (simulated role wins).
+     */
+    public function effectiveRole(): string
+    {
+        return $this->simulatedRole() ?? $this->realRole();
+    }
+
+    /**
      * Check if user is Super Admin.
      */
     public function isSuperAdmin(): bool
     {
-        return $this->role === 'superadmin';
+        return $this->effectiveRole() === 'superadmin';
     }
 
     /**
@@ -65,7 +95,7 @@ class User extends Authenticatable
      */
     public function isTeacher(): bool
     {
-        return in_array($this->role, ['superadmin', 'guru'], true);
+        return in_array($this->effectiveRole(), ['superadmin', 'guru'], true);
     }
 
     /**
@@ -73,7 +103,23 @@ class User extends Authenticatable
      */
     public function isStudent(): bool
     {
-        return $this->role === 'murid';
+        return $this->effectiveRole() === 'murid';
+    }
+
+    /**
+     * Check the real database role regardless of any simulation.
+     */
+    public function reallyIsSuperAdmin(): bool
+    {
+        return $this->realRole() === 'superadmin';
+    }
+
+    /**
+     * Check if a role simulation is currently active.
+     */
+    public function isSimulating(): bool
+    {
+        return $this->simulatedRole() !== null;
     }
 
     /**
@@ -93,11 +139,11 @@ class User extends Authenticatable
      */
     public function getRoleNameAttribute(): string
     {
-        return match ($this->role) {
+        return match ($this->effectiveRole()) {
             'superadmin' => 'Super Admin',
             'guru' => 'Guru',
             'murid' => 'Murid',
-            default => ucfirst((string) $this->role),
+            default => ucfirst($this->effectiveRole()),
         };
     }
 
@@ -106,7 +152,7 @@ class User extends Authenticatable
      */
     public function getRoleBadgeClassAttribute(): string
     {
-        return match ($this->role) {
+        return match ($this->effectiveRole()) {
             'superadmin' => 'badge-danger',
             'guru' => 'badge-primary',
             'murid' => 'badge-success',

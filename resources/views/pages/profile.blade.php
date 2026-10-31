@@ -53,7 +53,7 @@
                         </tbody>
                     </table>
 
-                    @if ($user->avatar)
+                    @if ($user->avatar && ! $user->isSimulating())
                         <form action="{{ route('profile.avatar.destroy') }}" method="POST" class="mt-2">
                             @csrf
                             @method('DELETE')
@@ -75,6 +75,14 @@
                     </h6>
                 </div>
                 <div class="card-body">
+                    @if ($user->isSimulating())
+                        <div class="alert alert-info small mb-3">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Anda sedang <strong>menyimulasikan</strong> tampilan
+                            <strong>{{ $user->role_name }}</strong>. Form ini hanya pratinjau dan tidak dapat menyimpan perubahan.
+                            <a href="#" onclick="event.preventDefault(); document.getElementById('exit-simulation-form').submit();">Keluar dari simulasi</a>.
+                        </div>
+                    @endif
                     <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
@@ -86,6 +94,7 @@
                                 id="name"
                                 class="form-control @error('name') is-invalid @enderror"
                                 value="{{ old('name', $user->name) }}"
+                                {{ $user->isSimulating() ? 'disabled' : '' }}
                                 required>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -99,6 +108,7 @@
                                 id="email"
                                 class="form-control @error('email') is-invalid @enderror"
                                 value="{{ old('email', $user->email) }}"
+                                {{ $user->isSimulating() ? 'disabled' : '' }}
                                 required>
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -112,7 +122,8 @@
                                     name="avatar"
                                     class="custom-file-input @error('avatar') is-invalid @enderror"
                                     id="avatar"
-                                    accept="image/*">
+                                    accept="image/*"
+                                    {{ $user->isSimulating() ? 'disabled' : '' }}>
                                 <label class="custom-file-label" for="avatar">Pilih file foto (JPG, PNG, WEBP, maks 2MB)...</label>
                             </div>
                             <small class="form-text text-muted">Format yang didukung: JPG, JPEG, PNG, WEBP, SVG. Ukuran maksimal 2MB.</small>
@@ -121,7 +132,7 @@
                             @enderror
                         </div>
 
-                        <button type="submit" class="btn btn-primary font-weight-bold shadow-sm">
+                        <button type="submit" class="btn btn-primary font-weight-bold shadow-sm" {{ $user->isSimulating() ? 'disabled' : '' }}>
                             <i class="fas fa-save mr-1"></i> Simpan Perubahan Profil
                         </button>
                     </form>
@@ -147,6 +158,7 @@
                                 id="current_password"
                                 class="form-control @error('current_password') is-invalid @enderror"
                                 placeholder="Masukkan kata sandi lama Anda"
+                                {{ $user->isSimulating() ? 'disabled' : '' }}
                                 required>
                             @error('current_password')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -161,6 +173,7 @@
                                     id="new_password"
                                     class="form-control @error('password') is-invalid @enderror"
                                     placeholder="Minimal 6 karakter"
+                                    {{ $user->isSimulating() ? 'disabled' : '' }}
                                     required>
                                 @error('password')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -173,16 +186,66 @@
                                     id="password_confirmation"
                                     class="form-control"
                                     placeholder="Konfirmasi kata sandi baru"
+                                    {{ $user->isSimulating() ? 'disabled' : '' }}
                                     required>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-warning font-weight-bold shadow-sm text-dark">
+                        <button type="submit" class="btn btn-warning font-weight-bold shadow-sm text-dark" {{ $user->isSimulating() ? 'disabled' : '' }}>
                             <i class="fas fa-lock mr-1"></i> Perbarui Kata Sandi
                         </button>
                     </form>
                 </div>
             </div>
+
+            @if ($user->reallyIsSuperAdmin())
+                <!-- Role Simulation Card (Super Admin only) -->
+                <div class="card shadow mb-4 border-left-warning">
+                    <div class="card-header py-3 bg-warning">
+                        <h6 class="m-0 font-weight-bold text-dark">
+                            <i class="fas fa-theater-masks mr-1"></i> Simulasi Tampilan Peran (Super Admin)
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">
+                            Lihat bagaimana halaman <strong>Guru</strong> dan <strong>Murid</strong> — termasuk menu,
+                            dashboard, materi, dan halaman Profil &amp; Password ini — tanpa perlu membuat akun baru.
+                            Mode simulasi bersifat <strong>read-only</strong> (tidak menyimpan perubahan apa pun).
+                        </p>
+
+                        @if ($user->isSimulating())
+                            <div class="alert alert-warning small py-2 mb-3">
+                                <i class="fas fa-eye mr-1"></i>
+                                Sedang menyimulasikan peran: <strong>{{ $user->role_name }}</strong>
+                            </div>
+                            <form id="exit-simulation-form" action="{{ route('profile.simulate.stop') }}" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-dark font-weight-bold shadow-sm">
+                                    <i class="fas fa-sign-out-alt mr-1"></i> Keluar dari Simulasi
+                                </button>
+                            </form>
+                        @else
+                            <div class="d-flex flex-wrap">
+                                <form action="{{ route('profile.simulate.start') }}" method="POST" class="mr-2 mb-2">
+                                    @csrf
+                                    <input type="hidden" name="simulate_role" value="guru">
+                                    <button type="submit" class="btn btn-outline-primary font-weight-bold shadow-sm">
+                                        <i class="fas fa-chalkboard-teacher mr-1"></i> Simulasikan sebagai Guru
+                                    </button>
+                                </form>
+                                <form action="{{ route('profile.simulate.start') }}" method="POST" class="mb-2">
+                                    @csrf
+                                    <input type="hidden" name="simulate_role" value="murid">
+                                    <button type="submit" class="btn btn-outline-success font-weight-bold shadow-sm">
+                                        <i class="fas fa-user-graduate mr-1"></i> Simulasikan sebagai Murid
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
 
         </div>
 
